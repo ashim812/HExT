@@ -5,7 +5,7 @@
   "display": "fullscreen",
   "background_color": "#ffffff",
   "theme_color": "#4f46e5",
-  "orientation": "portrait",
+  "orientation": "standalone",
   "icons": [
     {
             "src": "./HExT-app-icon-192.png",
