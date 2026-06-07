@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>HExT</title>
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4338ca">
+    <link rel="icon" type="image/png" href="HExT-app-icon-favicon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="HExT">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="apple-touch-icon" href="HExT-app-icon-ati.png">
+    <meta name="msapplication-TileColor" content="#0f0f0f">
+    <meta name="msapplication-TileImage" content="HExT-app-icon-512.png">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+	html, body {touch-action: manipulation; }
+	body {-webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }
+	input, textarea, select {-webkit-user-select: auto; -moz-user-select: auto; -ms-user-select: auto; user-select: auto; }
+        .view-section { display: none; }
+        .view-section.active { display: block; }
+	.hide-scrollbar::-webkit-scrollbar { display: none; }
+	.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans pb-20">
+    <header class="bg-indigo-700 text-white shadow-md sticky top-0 z-30">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
+            <h1 class="text-xl font-bold tracking-wide flex items-center gap-2"> 🏡 Expense Tracker</h1>
+            <button id="settings-toggle-btn" onclick="toggleSettingsView()" class="p-1 rounded-full hover:bg-indigo-800 transition focus:outline-none">
+                <i id="icon-cog" class="fa-solid fa-gear text-xl"></i>
+                <i id="icon-close" class="fa-solid fa-xmark text-2xl hidden"></i>
+            </button>
+        </div>
+    </header>
+    <main class="max-w-4xl mx-auto px-4 py-6">
+        <div id="summary-cards" class="grid grid-cols-3 gap-3 mb-6">
+            <div class="bg-white py-4 rounded-xl shadow-sm border border-gray-100">
+                <p class="text-xs text-gray-500 uppercase font-semibold" style="text-align:center">Spent</p>
+                <p class="text-lg md:text-xl font-bold text-indigo-600" id="stat-spent" style="text-align:center">₹0</p>
+            </div>
+	    <div class="bg-white py-4 rounded-xl shadow-sm border border-gray-100">
+                <p class="text-xs text-gray-500 uppercase font-semibold" style="text-align:center">Avg Spent</p>
+                <p class="text-lg md:text-xl font-bold text-gray-900" id="stat-average" style="text-align:center">₹0</p>
+            </div>            
+            <div class="bg-white py-4 rounded-xl shadow-sm border border-gray-100">
+                <p class="text-xs text-gray-500 uppercase font-semibold" style="text-align:center">Balance</p>
+                <p class="text-lg md:text-xl font-bold text-green-600" id="stat-remaining" style="text-align:center">₹0</p>
+            </div>
+        </div>
+        <div id="settings-heading" class="hidden mb-6">
+            <h2 class="text-2xl font-bold text-gray-800">Settings</h2>
+        </div>
+
+        <section id="view-dashboard" class="view-section active space-y-6">
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <h3 id="spending-percentage-title" class="mb-4 text-gray-700 flex items-baseline gap-1">
+			<span class="text-4xl font-extrabold text-700">0%</span>
+			<span class="text-sm font-medium text-gray-500 mx-1">of</span> 
+		        <span class="text-xl font-bold text-gray-600">₹0</span> 
+		        <span class="text-sm font-medium text-gray-500 ml-1">spent</span>
+		</h3>
+                <div id="segmented-progress-bar" class="w-full bg-gray-100 rounded-full h-4 flex overflow-hidden mb-4"></div>
+                <div id="progress-legend" class="flex flex-col mt-4 w-full"></div>
+            </div>
+	    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4 self-start">Category Spending %</h3>
+                    <div id="doughnut-container" class="relative w-full max-w-[280px] mx-auto h-[400px]">
+                        <canvas id="categoryDoughnutChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">Spending Trend</h3>
+                    <div id="trend-container" class="relative flex-1 w-full min-h-[250px]">
+                        <canvas id="spendingTrendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">Category Spending Trend</h3>
+                <div id="cat-trend-container" class="relative w-full h-[300px]">
+                    <canvas id="categoryTrendChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section id="view-expenses" class="view-section space-y-6">
+	    <div class="bg-white p-3 pr-0 rounded-xl shadow-sm border border-gray-100 flex overflow-x-auto hide-scrollbar gap-2 items-center text-sm relative">
+		  <div class="flex items-center gap-0.5 shrink-0 min-w-[110px] border-r pr-2 border-gray-200">
+                    <i class="fa-solid fa-sort text-gray-400"></i>
+                    <select id="sort-by" onchange="renderExpenseList()" class="w-full border-none outline-none bg-transparent text-gray-700 cursor-pointer">
+                        <option value="date_desc">Date (Newest)</option>
+                        <option value="date_asc">Date (Oldest)</option>
+                        <option value="amount_desc">Amount (High to Low)</option>
+                        <option value="amount_asc">Amount (Low to High)</option>
+                    </select>
+                </div>
+		<div class="flex items-center gap-0.5 shrink-0 min-w-[110px] border-r pr-2 border-gray-200">
+                    <i class="fa-solid fa-tag text-gray-400"></i>
+                    <select id="filter-category" onchange="renderExpenseList()" class="w-full border-none outline-none bg-transparent text-gray-700 cursor-pointer">
+                        <option value="all">All Categories</option>
+                        </select>
+                </div>
+                <div class="flex items-center gap-0.5 shrink-0 min-w-[110px]">
+                    <i class="fa-solid fa-calendar-day text-gray-400"></i>
+                    <select id="filter-date" onchange="toggleDateInputs(); renderExpenseList()" class="border-none outline-none bg-transparent text-gray-700 cursor-pointer">
+                        <option value="all">All Dates</option>
+                        <option value="custom_date">Custom Date</option>
+                        <option value="custom_range">Custom Date Range</option>
+                    </select>
+		    <input type="date" id="filter-exact-date" onchange="renderExpenseList()" class="hidden border border-gray-200 rounded px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-indigo-400 bg-gray-50 text-gray-700">
+                    
+                    <div id="filter-range-inputs" class="hidden items-center gap-1">
+                        <input type="date" id="filter-start-date" onchange="renderExpenseList()" class="border border-gray-200 rounded px-1 py-1 text-xs outline-none focus:ring-1 focus:ring-indigo-400 bg-gray-50 text-gray-700">
+                        <span class="text-gray-400 text-xs">to</span>
+                        <input type="date" id="filter-end-date" onchange="renderExpenseList()" class="border border-gray-200 rounded px-1 py-1 text-xs outline-none focus:ring-1 focus:ring-indigo-400 bg-gray-50 text-gray-700">
+                    </div>
+                </div>                
+                <div class="flex items-center gap-0.5 shrink-0 min-w-[110px] border-l pl-2 border-gray-200">
+                    <i class="fa-solid fa-indian-rupee-sign text-gray-400"></i>
+                    <select id="filter-amount" onchange="toggleAmountInputs(); renderExpenseList()" class="w-full border-none outline-none bg-transparent text-gray-700 cursor-pointer">
+                        <option value="all">All Amounts</option>
+                        <option value="under">Under</option>
+                        <option value="between">Between</option>
+                        <option value="above">Above</option>
+                    </select>
+		    <input type="number" id="filter-amt-under" oninput="renderExpenseList()" placeholder="Max ₹" class="hidden w-20 border border-gray-200 rounded px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-indigo-400 bg-gray-50 text-gray-700">                    
+                    <div id="filter-amt-between" class="hidden items-center gap-1">
+                        <input type="number" id="filter-amt-start" oninput="renderExpenseList()" placeholder="Min ₹" class="w-20 border border-gray-200 rounded px-1 py-1 text-xs outline-none focus:ring-1 focus:ring-indigo-400 bg-gray-50 text-gray-700">
+                        <span class="text-gray-400 text-xs">to</span>
+                        <input type="number" id="filter-amt-end" oninput="renderExpenseList()" placeholder="Max ₹" class="w-20 border border-gray-200 rounded px-1 py-1 text-xs outline-none focus:ring-1 focus:ring-indigo-400 bg-gray-50 text-gray-700">
+                    </div>
+                    <input type="number" id="filter-amt-above" oninput="renderExpenseList()" placeholder="Min ₹" class="hidden w-20 border border-gray-200 rounded px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-indigo-400 bg-gray-50 text-gray-700">
+                </div>              
+		<button onclick="resetFilters()" class="shrink-0 text-indigo-600 hover:text-indigo-800 font-medium transition px-2 ml-auto border-l pl-1 border-gray-200 sticky right-0 bg-white z-10 py-1 shadow-[4px_0_6px_-4px_rgba(0,0,0,0.1)]">Reset</button>                
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="p-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
+		    <div class="flex items-center gap-2">
+		        <input type="checkbox" id="select-all-cb" class="hidden cursor-pointer w-4 h-4 text-indigo-600 rounded" onclick="toggleSelectAll(this)">
+		        <h3 id="edit-toggle-btn" class="text-md font-bold text-gray-700 cursor-pointer hover:text-indigo-600 transition" onclick="toggleEditMode()">Edit</h3>
+		    </div>
+		    <div id="edit-actions" class="hidden flex items-center gap-12">
+		        <button onclick="deleteSelectedExpenses()" class="text-red-500 hover:text-red-700 transition" title="Delete Selected">
+		            <i class="fa-solid fa-trash-can"></i>
+		        </button>
+		        <button onclick="cancelEditMode()" class="text-gray-500 hover:text-gray-700 transition" title="Cancel Editing">
+		            <i class="fa-solid fa-xmark text-lg"></i>
+		        </button>
+		    </div>
+		<span class="text-xs text-gray-500 font-medium" id="tx-count">0 items</span>
+	   </div>
+                <div id="expense-list" class="divide-y divide-gray-100 max-h-[600px] overflow-y-auto">
+                    </div>
+            </div>
+        </section>
+
+        <section id="view-app-settings" class="view-section">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 divide-y divide-gray-100 overflow-hidden">
+                <div onclick="editUsername()" class="flex items-center p-4 hover:bg-gray-50 cursor-pointer transition">
+                    <div class="px-3 py-2 bg-indigo-50 text-indigo-600 rounded-lg mr-4">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <div>
+                        <p id="display-username" class="font-medium text-gray-800">User</p>
+                    </div>
+                </div>
+
+                <div onclick="openBudgetModal()" class="flex items-center p-4 hover:bg-gray-50 cursor-pointer transition">
+                    <div class="p-2 bg-emerald-50 text-emerald-600 rounded-lg mr-4">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="font-medium text-gray-800">Budget Setting</p>
+                    </div>
+                </div>
+
+                <div onclick="openCategoryModal()" class="flex items-center p-4 hover:bg-gray-50 cursor-pointer transition">
+                    <div class="p-2 bg-amber-50 text-amber-600 rounded-lg mr-4">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="font-medium text-gray-800">Category Settings</p>
+                    </div>
+                </div>
+
+                <div onclick="openReportModal()" class="flex items-center p-4 hover:bg-gray-50 cursor-pointer transition">
+                    <div class="px-3 py-1 bg-rose-50 text-rose-600 rounded-lg mr-4">
+                        <i class="far fa-file-lines text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="font-medium text-gray-800">Generate Report</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="expense-overlay" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-30 hidden transition-all duration-300 opacity-0" onclick="closeExpenseModal()"></div>
+
+    <div id="expense-modal" class="fixed bottom-[0px] left-0 right-0 max-w-4xl mx-auto bg-white rounded-t-3xl shadow-[0_-10px_25px_-5px_rgba(0,0,0,0.15)] z-40 transform translate-y-full transition-transform duration-300 ease-in-out p-6 pb-16 border-t border-gray-100">
+        <h3 class="text-xl font-bold mb-4 text-gray-800 text-center" id="form-title">Add New Expense</h3>
+        <form id="expense-form" class="space-y-4" onsubmit="handleExpenseSubmit(event)">
+            <input type="hidden" id="expense-id">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-1">Amount (₹)</label>
+                    <input type="number" id="exp-amount" required min="1" class="w-full border p-2 rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-1">Category</label>
+                    <select id="exp-category" required class="w-full border p-2 rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none">
+			<option value="Milk">Milk</option>
+                        <option value="Groceries">Groceries</option>
+                        <option value="Fashion">Fashion</option>
+                        <option value="Utility Bill">Utility Bill</option>
+                        <option value="Stationery">Stationery</option>
+                        <option value="Fees">Fees</option>
+                        <option value="Vegetables & Fruits">Vegetables & Fruits</option>
+                        <option value="Medical">Medical</option>
+                        <option value="Miscellaneous">Miscellaneous</option>
+                    </select>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-1">Date</label>
+                    <input type="date" id="exp-date" required class="w-full border p-2 rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 mb-1">Remarks / Description</label>
+                    <input type="text" id="exp-notes" class="w-full border p-2 rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none">
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div id="budget-modal" class="fixed inset-0 backdrop-blur-sm z-50 hidden flex items-center justify-center px-4">
+        <div class="absolute inset-0 bg-black/50" onclick="closeBudgetModal()"></div>        
+        <div class="bg-white rounded-xl shadow-lg z-10 w-full max-w-sm p-6 relative transform transition-all">
+            <form onsubmit="handleSingleBudgetSubmit(event)">
+                <label class="block text-sm font-medium text-gray-600 mb-1">Total Budget (₹)</label>
+                <input type="number" id="single-budget-input" required min="0" class="w-full border p-2 rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none mb-4 text-lg font-bold">
+                <button type="submit" class="w-full bg-emerald-600 text-white py-3 rounded-lg font-bold hover:bg-emerald-700 transition shadow">Set Budget</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="category-modal" class="fixed inset-0 backdrop-blur-sm z-50 hidden flex items-center justify-center px-4">
+	<div class="absolute inset-0 bg-black/50" onclick="closeCategoryModal()"></div>
+    	<div class="bg-white rounded-xl shadow-lg z-10 w-full max-w-md p-6 relative max-h-[80vh] flex flex-col">
+	    <h3 class="text-xl font-bold mb-4 text-gray-800 text-center">Categories</h3>
+	    <div id="category-list" class="overflow-y-auto flex-1 divide-y divide-gray-100 mb-4 max-h-64">
+        	</div>
+	    <form onsubmit="addCategory(event)" class="flex gap-2 border-t border-gray-100 pt-4">
+        	<input type="text" id="new-category-input" required placeholder="Add new category..." class="flex-1 border p-2 rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none">
+            	<button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition font-bold"><i class="fa-solid fa-plus"></i></button>
+	     </form>
+	 </div>
+     </div>
+
+     <div id="report-modal" class="fixed inset-0 z-50 hidden bg-gray-100 flex flex-col">
+	 <div class="p-4 bg-indigo-700 text-white flex justify-between items-center shadow-md">
+	     <h2 class="text-xl font-bold">Report Preview</h2>
+	     <div class="flex gap-4">
+	         <button onclick="downloadReportPDF()" class="bg-white text-indigo-700 px-4 py-2 rounded font-bold hover:bg-gray-100 transition shadow"><i class="fa-solid fa-download mr-2"></i>PDF</button>
+	         <button onclick="closeReportModal()" class="text-white hover:text-gray-300 transition"><i class="fa-solid fa-xmark text-2xl"></i></button>
+	      </div>
+	 </div>
+	 <div class="flex-1 overflow-y-auto p-4 md:p-8">
+	     <div id="pdf-content" class="max-w-3xl mx-auto bg-white p-5 md:p-12 shadow-lg border border-gray-200">
+	         </div>
+	 </div>
+     </div>
+
+    <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] flex justify-evenly items-center text-xs z-50 pb-[env(safe-area-inset-bottom)] transition-transform duration-300">
+        <button id="nav-btn-dashboard" onclick="switchView('dashboard')" class="flex flex-col items-center gap-1 text-indigo-600 font-medium w-16">
+            <span><i class="fa-solid fa-magnifying-glass-chart"></i></span>Analytics
+        </button>
+
+        <div class="relative flex justify-center items-center w-28 h-12">
+            <button id="nav-plus-btn" onclick="openExpenseModal('Add')" type="button" class="absolute bottom-2 bg-indigo-600 text-white w-14 h-14 rounded-full flex justify-center items-center shadow-lg shadow-indigo-600/30 hover:bg-indigo-700 transition-all duration-300 transform hover:scale-95">
+                <i class="fa-solid fa-plus text-3xl"></i>
+            </button>
+            
+            <button id="nav-submit-btn" form="expense-form" type="submit" class="absolute bottom-1 hidden bg-indigo-600 text-white px-8 py-3 rounded-full shadow-lg font-bold hover:bg-indigo-700 transition-all duration-300 transform hover:scale-105">
+                Add
+            </button>
+        </div>
+
+        <button id="nav-btn-expenses" onclick="switchView('expenses')" class="flex flex-col items-center gap-1 text-gray-500 hover:text-indigo-600 w-16">
+            <span><i class="fa-solid fa-coins"></i></span>Expenses
+        </button>        
+    </nav>
+    <div id="toast-container" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-[100] flex flex-col gap-2 pointer-events-none"></div>
+
+    <script>
+	let chartInstances = { doughnut: null, trend: null, catTrend: null };
+
+	const chartHexColors = [
+	    '#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
+            '#ec4899', '#06b6d4', '#14b8a6', '#64748b', '#a855f7'
+	];
+
+        const CATEGORIES = [
+            "Milk", "Groceries", "Fashion", "Utility Bill", "Stationery", "Fees", "Vegetables & Fruits", "Medical", "Miscellaneous"
+        ];
+
+	let state = {
+	    username: localStorage.getItem('hext_username') || 'User',
+	    expenses: JSON.parse(localStorage.getItem('hext_expenses')) || [],
+	    budget: Number(localStorage.getItem('hext_budget')) || 0,
+	    categories: JSON.parse(localStorage.getItem('hext_categories')) || ["Milk", "Groceries", "Fashion", "Utility Bill", "Stationery", "Fees", "Vegetables & Fruits", "Medical", "Miscellaneous"],
+	    disabledCategories: JSON.parse(localStorage.getItem('hext_disabled_categories')) || []
+	};
+
+        function saveData() {
+	    localStorage.setItem('hext_username', state.username);
+            localStorage.setItem('hext_expenses', JSON.stringify(state.expenses));
+            localStorage.setItem('hext_budget', state.budget);
+	    localStorage.setItem('hext_categories', JSON.stringify(state.categories));
+	    localStorage.setItem('hext_disabled_categories', JSON.stringify(state.disabledCategories));
+            updateMetrics();
+        }
+
+	document.addEventListener('DOMContentLoaded', () => {
+	    const savedName = localStorage.getItem('hext_username') || 'User';
+	    document.getElementById('display-username').innerText = savedName;
+	});
+
+	function editUsername() {
+	    const newName = prompt("Enter your name for the reports:", state.username);
+	    if (newName && newName.trim() !== "") {
+	        state.username = newName.trim();
+	        saveData();
+	        renderUsername();
+	    }
+	}
+
+	function renderUsername() {
+	    const el = document.getElementById('display-username');
+	    if(el) el.innerText = state.username;
+	}
+
+        function switchView(viewName) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.getElementById(`view-${viewName}`).classList.add('active');
+	    const isSettings = viewName === 'app-settings' || viewName === 'budget';
+            const summaryCards = document.getElementById('summary-cards');
+            if (viewName === 'dashboard') {
+                summaryCards.classList.remove('hidden');
+            } else {
+                summaryCards.classList.add('hidden');
+            }
+
+            const bottomNav = document.getElementById('bottom-nav');
+            if (isSettings) {
+                bottomNav.classList.add('hidden');
+            } else {
+                bottomNav.classList.remove('hidden');
+            }
+
+            if (!isSettings) {
+                document.getElementById('icon-cog').classList.remove('hidden');
+                document.getElementById('icon-close').classList.add('hidden');
+                document.getElementById('settings-heading').classList.add('hidden');
+            } else {
+                document.getElementById('icon-cog').classList.add('hidden');
+                document.getElementById('icon-close').classList.remove('hidden');
+                document.getElementById('settings-heading').classList.remove('hidden');
+            }
+	
+	    const btnDashboard = document.getElementById('nav-btn-dashboard');
+            const btnExpenses = document.getElementById('nav-btn-expenses');
+
+            if (btnDashboard && btnExpenses) {
+                btnDashboard.className = "flex flex-col items-center gap-1 text-gray-500 hover:text-indigo-600 w-16 transition-colors";
+                btnExpenses.className = "flex flex-col items-center gap-1 text-gray-500 hover:text-indigo-600 w-16 transition-colors";
+                if (viewName === 'dashboard') {
+                    btnDashboard.className = "flex flex-col items-center gap-1 text-indigo-600 font-medium w-16 transition-colors";
+                } else if (viewName === 'expenses') {
+                    btnExpenses.className = "flex flex-col items-center gap-1 text-indigo-600 font-medium w-16 transition-colors";
+                }
+            }
+
+            if (viewName === 'dashboard') renderCharts();
+        }
+
+        function toggleSettingsView() {
+            const appSettingsView = document.getElementById('view-app-settings');
+	    const isSettingsActive = appSettingsView && appSettingsView.classList.contains('active');
+            
+            if (isSettingsActive) {
+                switchView('dashboard');
+            } else {
+                switchView('app-settings');
+                document.getElementById('icon-cog').classList.add('hidden');
+                document.getElementById('icon-close').classList.remove('hidden');
+            }
+        }
+
+	function openExpenseModal(mode = 'Add') {
+            const overlay = document.getElementById('expense-overlay');
+            const modal = document.getElementById('expense-modal');
+            const plusBtn = document.getElementById('nav-plus-btn');
+            const submitBtn = document.getElementById('nav-submit-btn');
+            overlay.classList.remove('hidden');
+            setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+            modal.classList.remove('translate-y-full');
+            plusBtn.classList.add('hidden');
+            submitBtn.classList.remove('hidden');
+            submitBtn.innerText = mode;
+        }
+
+        function closeExpenseModal() {
+            const overlay = document.getElementById('expense-overlay');
+            const modal = document.getElementById('expense-modal');
+            const plusBtn = document.getElementById('nav-plus-btn');
+            const submitBtn = document.getElementById('nav-submit-btn');
+            modal.classList.add('translate-y-full');
+            overlay.classList.add('opacity-0');
+            setTimeout(() => overlay.classList.add('hidden'), 300);
+            submitBtn.classList.add('hidden');
+            plusBtn.classList.remove('hidden');
+            resetExpenseForm();
+        }
+
+	function openBudgetModal() {
+            document.getElementById('single-budget-input').value = state.budget || '';
+            document.getElementById('budget-modal').classList.remove('hidden');
+        }
+
+        function closeBudgetModal() {
+            document.getElementById('budget-modal').classList.add('hidden');
+        }
+
+        function handleSingleBudgetSubmit(e) {
+            e.preventDefault();
+            state.budget = Number(document.getElementById('single-budget-input').value) || 0;
+            saveData();
+            closeBudgetModal();
+            switchView('dashboard');
+        }
+
+	function toggleDateInputs() {
+	    const val = document.getElementById('filter-date').value;
+	    const exactInput = document.getElementById('filter-exact-date');
+	    const rangeInputs = document.getElementById('filter-range-inputs');
+    
+	    if (val === 'custom_date') {
+	        exactInput.classList.remove('hidden');
+	        rangeInputs.classList.add('hidden');
+	        rangeInputs.classList.remove('flex');
+	    } else if (val === 'custom_range') {
+	        exactInput.classList.add('hidden');
+	        rangeInputs.classList.remove('hidden');
+	        rangeInputs.classList.add('flex');
+	    } else {
+        	exactInput.classList.add('hidden');
+	        rangeInputs.classList.add('hidden');
+	        rangeInputs.classList.remove('flex');
+	    }
+	}
+
+	function toggleAmountInputs() {
+	    const val = document.getElementById('filter-amount').value;
+	    const underInput = document.getElementById('filter-amt-under');
+	    const betweenInputs = document.getElementById('filter-amt-between');
+	    const aboveInput = document.getElementById('filter-amt-above');
+    
+	    underInput.classList.add('hidden');
+	    betweenInputs.classList.add('hidden');
+	    betweenInputs.classList.remove('flex');
+	    aboveInput.classList.add('hidden');
+    
+	    if (val === 'under') {
+	        underInput.classList.remove('hidden');
+	    } else if (val === 'between') {
+	        betweenInputs.classList.remove('hidden');
+	        betweenInputs.classList.add('flex');
+	    } else if (val === 'above') {
+	        aboveInput.classList.remove('hidden');
+	    }
+	}
+
+	function openCategoryModal() {
+	    renderCategoryList();
+	    document.getElementById('category-modal').classList.remove('hidden');
+	}
+
+	function closeCategoryModal() {
+	    document.getElementById('category-modal').classList.add('hidden');
+	}
+	
+	function toggleCategoryActive(index, isChecked) {
+	    const cat = state.categories[index];
+	    if (isChecked) {
+	        state.disabledCategories = state.disabledCategories.filter(c => c !== cat);
+	    } else {
+	        if (!state.disabledCategories.includes(cat)) {
+	            state.disabledCategories.push(cat);
+	        }
+	    }
+	    saveData();
+	    renderCategoryList();
+	}
+
+	function renderCategoryList() {
+	    const container = document.getElementById('category-list');
+	    container.innerHTML = state.categories.map((cat, index) => {
+            const isDisabled = state.disabledCategories.includes(cat);
+            return`
+	        <div class="p-3 flex justify-between items-center bg-white hover:bg-gray-50 transition">
+	        <div class="flex items-center gap-3">
+                    <input type="checkbox" class="cursor-pointer w-4 h-4 text-indigo-600 rounded" 
+                           ${!isDisabled ? 'checked' : ''} 
+                           onchange="toggleCategoryActive(${index}, this.checked)">
+	                <span class="text-sm font-medium ${isDisabled ? 'text-gray-400 line-through' : 'text-gray-800'}">${escapeHTML(cat)}</span>
+                </div>
+	            <div class="flex gap-1">
+	                <button onclick="editCategory(${index})" type="button" class="text-xs bg-gray-100 hover:bg-indigo-100 hover:text-indigo-600 p-1.5 px-2 rounded text-gray-600 transition"><i class="fa-solid fa-pencil"></i></button>
+	                <button onclick="deleteCategory(${index})" type="button" class="text-xs bg-gray-100 hover:bg-red-100 p-1.5 px-2 rounded text-gray-600 transition"><i class="fa-solid fa-trash-can"></i></button>
+	            </div>
+	        </div>
+	    `}).join('');
+	
+	    const activeCats = state.categories.filter(cat => !state.disabledCategories.includes(cat));
+	    const selectEl = document.getElementById('exp-category');
+	    if (selectEl) {
+	        selectEl.innerHTML = activeCats.map(cat => `<option value="${escapeHTML(cat)}">${escapeHTML(cat)}</option>`).join('');
+	    }
+	    const filterCatEl = document.getElementById('filter-category');
+	    if (filterCatEl) {
+	        filterCatEl.innerHTML = `<option value="all">All Categories</option>` + 
+	           activeCats.map(cat => `<option value="${escapeHTML(cat)}">${escapeHTML(cat)}</option>`).join('');
+	    }
+	}
+
+	function addCategory(e) {
+	    e.preventDefault();
+	    const input = document.getElementById('new-category-input');
+	    const val = input.value.trim();
+	    if (val && !state.categories.includes(val)) {
+	        state.categories.push(val);
+	        saveData();
+	        renderCategoryList();
+	        input.value = '';
+	    }
+	}
+
+	function deleteCategory(index) {
+	    if (confirm('Delete this category? Note: Existing expenses with this category will keep their label.')) {
+	        const cat = state.categories[index];
+	            state.categories.splice(index, 1);
+                state.disabledCategories = state.disabledCategories.filter(c => c !== cat);
+	        saveData();
+	        renderCategoryList();
+		showToast("Category deleted");
+	    }
+	}
+
+	function editCategory(index) {
+	    const oldName = state.categories[index];
+	    const newName = prompt("Edit category name:", oldName);
+	    if (newName && newName.trim() !== "" && !state.categories.includes(newName.trim())) {
+	        const finalName = newName.trim();
+	    	state.categories[index] = finalName;
+	        const dIndex = state.disabledCategories.indexOf(oldName);
+	        if (dIndex !== -1) {
+	             state.disabledCategories[dIndex] = finalName;
+	        }
+	        saveData();
+	        renderCategoryList();
+	    }
+	}
+
+        function updateMetrics() {
+            const totalBudget = Number(state.budget) || 0;
+            const totalSpent = state.expenses.reduce((a, b) => a + Number(b.amount), 0);
+            const remaining = totalBudget - totalSpent;
+	    const spentPercentage = totalBudget > 0 ? Math.round((totalSpent / totalBudget) * 100) : 0;
+            const titleEl = document.getElementById('spending-percentage-title');
+            if (titleEl) {
+                titleEl.innerHTML = `
+		    <span class="text-4xl font-extrabold text-700">${spentPercentage}%</span>
+		    <span class="text-sm font-medium text-gray-500 mx-1">of</span> 
+		    <span class="text-xl font-bold text-gray-600">₹${totalBudget.toLocaleString('en-IN')}</span> 
+		    <span class="text-sm font-medium text-gray-500 ml-1">spent</span>`;
+            }
+
+	    const uniqueDates = new Set(state.expenses.map(exp => exp.date)).size;
+	    const averagePerDay = uniqueDates > 0 ? Math.round(totalSpent / uniqueDates) : 0;
+
+	    document.getElementById('stat-average').innerText = `₹${averagePerDay.toLocaleString('en-IN')}`;	    
+            document.getElementById('stat-spent').innerText = `₹${totalSpent.toLocaleString('en-IN')}`;
+            
+            const remEl = document.getElementById('stat-remaining');
+            remEl.innerText = `₹${remaining.toLocaleString('en-IN')}`;
+            if(remaining < 0) {
+                remEl.className = "text-lg md:text-xl font-bold text-red-600";
+            } else {
+                remEl.className = "text-lg md:text-xl font-bold text-green-600";
+            }
+
+            renderExpenseList();
+        }
+
+	 let isEditingMode = false;
+
+	 function toggleEditMode() {
+	     if (!isEditingMode) {
+	        isEditingMode = true;
+	        document.getElementById('edit-toggle-btn').innerText = 'All';        
+	        const selectAllCb = document.getElementById('select-all-cb');
+	        selectAllCb.classList.remove('hidden');
+	        selectAllCb.checked = false;        
+	        document.getElementById('edit-actions').classList.remove('hidden');
+	        renderExpenseList(); 
+	    } else {
+	        const selectAllCb = document.getElementById('select-all-cb');
+	        selectAllCb.checked = !selectAllCb.checked;
+	        toggleSelectAll(selectAllCb);
+	    }
+	}
+
+	 function cancelEditMode() {
+	    isEditingMode = false;
+	    document.getElementById('edit-toggle-btn').innerText = 'Edit';    
+	    const selectAllCb = document.getElementById('select-all-cb');
+	    selectAllCb.classList.add('hidden');
+	    selectAllCb.checked = false;    
+	    document.getElementById('edit-actions').classList.add('hidden');    
+	    renderExpenseList();
+	 }
+
+	 function toggleSelectAll(checkbox) {
+	     const rowCheckboxes = document.querySelectorAll('.row-checkbox');
+	     rowCheckboxes.forEach(cb => cb.checked = checkbox.checked);
+	     updateSelectionCounter();
+	 }
+
+	function updateSelectionCounter() {
+	    const countEl = document.getElementById('tx-count');  
+	    if (isEditingMode) {
+	        const selectedCount = document.querySelectorAll('.row-checkbox:checked').length;
+	        countEl.innerText = `${selectedCount} of ${currentFilteredCount} records`;
+	    } else {
+	        countEl.innerText = `${currentFilteredCount} records`;
+	    }
+	}
+
+	function deleteSelectedExpenses() {
+	    const selectedCheckboxes = document.querySelectorAll('.row-checkbox:checked');
+	    if (selectedCheckboxes.length === 0) {
+	        showToast("Please select at least one expense to delete.", "error");
+	        return;
+	    }
+    
+	    if(confirm(`Are you sure you want to delete ${selectedCheckboxes.length} selected expense(s)?`)) {
+	        const idsToDelete = Array.from(selectedCheckboxes).map(cb => cb.value);
+	        state.expenses = state.expenses.filter(e => !idsToDelete.includes(e.id));	        
+	        saveData();
+	        cancelEditMode();
+		showToast(`${selectedCheckboxes.length} expenses deleted`);
+	    }
+	}
+
+	let currentFilteredCount = 0;
+
+	function resetFilters() {
+	    const dropdownIds = ['filter-date', 'filter-category', 'filter-amount', 'sort-by'];
+	    const inputIds = ['filter-exact-date', 'filter-start-date', 'filter-end-date', 'filter-amt-under', 'filter-amt-start', 'filter-amt-end', 'filter-amt-above'];
+    
+	    dropdownIds.forEach(id => {
+	        const el = document.getElementById(id);
+	        if(el) el.value = id === 'sort-by' ? 'date_desc' : 'all';
+	    });
+    
+	    inputIds.forEach(id => {
+	        const el = document.getElementById(id);
+	        if(el) el.value = '';
+	    });
+    
+	    toggleDateInputs();
+	    toggleAmountInputs();
+	    renderExpenseList();
+	}
+
+        function renderExpenseList() {
+            const container = document.getElementById('expense-list');            
+            if (state.expenses.length === 0) {
+		currentFilteredCount = 0;
+                container.innerHTML = `
+		    <div class="flex flex-col items-center justify-center p-8 text-center">
+		        <p class="text-gray-500 font-medium">No expense logged yet.</p>
+		        <p class="text-gray-400 text-xs mt-3">Tap the + button</p>
+		    </div>`;
+		updateSelectionCounter();
+                return;
+            }
+
+	    const amtFilter = document.getElementById('filter-amount')?.value || 'all';
+	    const amtUnder = Number(document.getElementById('filter-amt-under')?.value) || 0;
+	    const amtStart = Number(document.getElementById('filter-amt-start')?.value) || 0;
+	    const rawAmtEnd = document.getElementById('filter-amt-end')?.value;
+	    const amtEnd = (rawAmtEnd && rawAmtEnd.trim() !== '') ? Number(rawAmtEnd) : Infinity;
+	    const amtAbove = Number(document.getElementById('filter-amt-above')?.value) || 0;
+            const dateFilter = document.getElementById('filter-date')?.value || 'all';
+	    const exactDate = document.getElementById('filter-exact-date')?.value;
+	    const startDate = document.getElementById('filter-start-date')?.value;
+	    const endDate = document.getElementById('filter-end-date')?.value;
+	    const catFilter = document.getElementById('filter-category')?.value || 'all';
+	    const sortBy = document.getElementById('sort-by')?.value || 'date_desc';
+
+	    let filtered = state.expenses.filter(exp => {
+	        let pass = true;
+        	const expDate = new Date(exp.date);
+	        expDate.setHours(0,0,0,0);
+
+	        if (dateFilter !== 'all') {
+	            if (dateFilter === 'custom_date' && exactDate) {
+	                const targetDate = new Date(exactDate);
+	                targetDate.setHours(0,0,0,0);
+	                if (expDate.getTime() !== targetDate.getTime()) pass = false;
+	            } 
+	            else if (dateFilter === 'custom_range') {
+	                if (startDate) {
+	                    const sDate = new Date(startDate);
+	                    sDate.setHours(0,0,0,0);
+	                    if (expDate < sDate) pass = false;
+	                }
+	                if (endDate) {
+	                    const eDate = new Date(endDate);
+	                    eDate.setHours(23,59,59,999);
+	                    if (expDate > eDate) pass = false;
+	                }
+	            }
+	        }
+
+	        if (pass && catFilter !== 'all' && exp.category !== catFilter) pass = false;
+
+	        if (pass && amtFilter !== 'all') {
+	            const amt = Number(exp.amount);
+	            if (amtFilter === 'under' && amtUnder > 0 && amt >= amtUnder) {
+	                pass = false;
+	            } else if (amtFilter === 'between') {
+	                if (amt < amtStart || amt > amtEnd) pass = false;
+	            } else if (amtFilter === 'above' && amtAbove > 0 && amt <= amtAbove) {
+	                pass = false;
+	            }
+	        }
+
+	        return pass;
+	    });
+
+	    filtered.sort((a, b) => {
+	        if (sortBy === 'date_desc') return new Date(b.date) - new Date(a.date);
+	        if (sortBy === 'date_asc') return new Date(a.date) - new Date(b.date);
+	        if (sortBy === 'amount_desc') return Number(b.amount) - Number(a.amount);
+	        if (sortBy === 'amount_asc') return Number(a.amount) - Number(b.amount);
+	        return 0;
+	    });
+
+	    currentFilteredCount = filtered.length;
+
+	    if (filtered.length === 0) {
+	        container.innerHTML = `<div class="p-8 text-center text-gray-400 text-sm">No expenses match your filters.</div>`;
+	        updateSelectionCounter();
+	        return;
+	    }
+
+            container.innerHTML = filtered.map(exp => `
+                <div class="p-4 flex justify-between items-center bg-white hover:bg-gray-50 transition border-b border-gray-50">
+                    <div class="flex-1 min-w-0 pr-2 flex items-center">
+	                ${isEditingMode ? `<input type="checkbox" class="row-checkbox mr-3 cursor-pointer w-4 h-4 text-indigo-600 rounded" value="${exp.id}" onclick="updateSelectionCounter()">` : ''}
+	                <div>
+	                    <p class="text-sm font-semibold text-gray-900 truncate">${escapeHTML(exp.description || exp.category)}</p>
+	                    <p class="text-xs text-gray-500">${exp.category} • ${formatDate(exp.date)}</p>
+	                </div>
+	            </div>
+                    <div class="flex items-center gap-4">
+                        <span class="text-sm font-bold text-gray-900">₹${Number(exp.amount).toLocaleString('en-IN')}</span>
+                        <div class="flex gap-1">
+                            ${!isEditingMode ? `<button onclick="editExpense('${exp.id}')" class="text-xs bg-gray-100 hover:bg-indigo-100 hover:text-indigo-600 p-1.5 px-2 rounded text-gray-600 transition"><i class="fa-solid fa-pencil"></i></button>
+                            <button onclick="deleteExpense('${exp.id}')" class="text-xs bg-gray-100 hover:bg-red-100 p-1.5 px-2 rounded text-gray-600 transition"><i class="fa-solid fa-trash-can"></i></button>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+	    updateSelectionCounter();
+        }
+
+        function renderCharts() {
+            const totalsByCategory = {};
+	    const totalBudget = state.budget || 0;
+            let totalSpent = 0;
+            state.expenses.forEach(e => {
+                const amount = Number(e.amount);
+                totalsByCategory[e.category] = (totalsByCategory[e.category] || 0) + amount;
+                totalSpent += amount;
+            });
+
+            const activeCategories = Object.keys(totalsByCategory).filter(k => totalsByCategory[k] > 0);
+            const colors = [
+                'bg-indigo-600', 'bg-emerald-500', 'bg-amber-500', 'bg-red-500', 'bg-purple-500', 
+                'bg-pink-500', 'bg-cyan-500', 'bg-teal-500', 'bg-slate-500', 'bg-fuchsia-500'
+            ];
+
+            const barContainer = document.getElementById('segmented-progress-bar');
+            const legendContainer = document.getElementById('progress-legend');
+	    const doughnutContainer = document.getElementById('doughnut-container');
+	    const trendContainer = document.getElementById('trend-container');
+	    const catTrendContainer = document.getElementById('cat-trend-container');
+
+            if (!barContainer || !legendContainer) return;
+
+            if (totalSpent === 0) {
+                barContainer.innerHTML = '';
+                legendContainer.innerHTML = '<span class="text-gray-400">No expense logged yet</span>';
+                Object.values(chartInstances).forEach(chart => { if(chart) chart.destroy(); });
+		if (doughnutContainer) {
+	            doughnutContainer.className = "relative w-full max-w-[280px] mx-auto"; 
+	            doughnutContainer.innerHTML = '<div class="text-center text-gray-400 py-4 text-sm">No expense logged yet</div>';
+	        }
+	        if (trendContainer) {
+	            trendContainer.className = "relative flex-1 w-full"; 
+	            trendContainer.innerHTML = '<div class="text-center text-gray-400 py-4 text-sm">No expense logged yet</div>';
+	        }
+	        if (catTrendContainer) {
+	            catTrendContainer.className = "relative w-full"; 
+	            catTrendContainer.innerHTML = '<div class="text-center text-gray-400 py-4 text-sm">No expense logged yet</div>';
+	        }
+                return;
+            }
+	    
+	    if (doughnutContainer && !document.getElementById('categoryDoughnutChart')) {
+	        doughnutContainer.className = "relative w-full max-w-[280px] mx-auto h-[400px]";
+	        doughnutContainer.innerHTML = '<canvas id="categoryDoughnutChart"></canvas>';
+	    }
+	    if (trendContainer && !document.getElementById('spendingTrendChart')) {
+	        trendContainer.className = "relative flex-1 w-full min-h-[250px]";
+	        trendContainer.innerHTML = '<canvas id="spendingTrendChart"></canvas>';
+	    }
+	    if (catTrendContainer && !document.getElementById('categoryTrendChart')) {
+	        catTrendContainer.className = "relative w-full h-[300px]";
+	        catTrendContainer.innerHTML = '<canvas id="categoryTrendChart"></canvas>';
+	    }
+
+	    legendContainer.className = "flex flex-col gap-1 mt-4 w-full";
+
+            let barHTML = '';
+            let legendHTML = '';
+	    const scaleBase = (totalBudget > totalSpent) ? totalBudget : totalSpent;
+
+            activeCategories.forEach((cat, index) => {
+                const amount = totalsByCategory[cat];
+                const percent = (amount / scaleBase) * 100;
+		const percentOfBudget = totalBudget > 0 ? ((amount / totalBudget) * 100).toFixed(1) : 0;
+                const colorClass = colors[index % colors.length];
+                barHTML += `<div id="bar-segment-${index}" class="${colorClass} h-full transition-all duration-700 ease-out" style="width: 0%" data-width="${percent}%" title="${cat}: ₹${amount}"></div>`;
+		
+                legendHTML += `
+                    <div class="flex items-center justify-between p-1.5 hover:bg-gray-100 rounded-lg cursor-pointer border border-transparent transition-all duration-200" onclick="highlightSegment(${index}, ${activeCategories.length})">
+	            <div class="flex items-center gap-3">
+	                <span class="w-3.5 h-3.5 rounded-full ${colorClass} shadow-sm"></span>
+	                <span class="text-gray-700 font-semibold text-sm">${cat}</span>
+	            </div>
+	            <div class="flex items-center gap-4 text-sm">
+	                <span class="text-gray-900 font-bold">₹${amount.toLocaleString('en-IN')}</span>
+	                <span class="text-gray-500 w-12 text-right font-medium">${percentOfBudget}%</span>
+	            </div>
+	        </div>
+                `;
+            });
+
+            barContainer.innerHTML = barHTML;
+            legendContainer.innerHTML = legendHTML;
+
+	    setTimeout(() => {
+                activeCategories.forEach((_, index) => {
+                    const segment = document.getElementById(`bar-segment-${index}`);
+                    if (segment) {
+                        segment.style.width = segment.getAttribute('data-width');
+                    }
+                });
+            }, 50);
+
+            Chart.defaults.font.family = "'Inter', 'sans-serif'";
+            Chart.defaults.color = '#64748b';
+
+            if (chartInstances.doughnut) chartInstances.doughnut.destroy();
+            if (chartInstances.trend) chartInstances.trend.destroy();
+            if (chartInstances.catTrend) chartInstances.catTrend.destroy();
+
+            const chartBgColors = activeCategories.map((_, i) => chartHexColors[i % chartHexColors.length]);
+	    const doughnutLabels = activeCategories.map(cat => {
+                const percent = ((totalsByCategory[cat] / totalSpent) * 100).toFixed(1);
+                return `${cat} (${percent}%)`;
+            });
+            const ctxDoughnut = document.getElementById('categoryDoughnutChart').getContext('2d');
+            chartInstances.doughnut = new Chart(ctxDoughnut, {
+                type: 'doughnut',
+                data: {
+                    labels: doughnutLabels,
+                    datasets: [{
+                        data: activeCategories.map(cat => totalsByCategory[cat]),
+                        backgroundColor: chartBgColors,
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true, position: 'bottom', labels: { boxWidth: 12, font: { size: 11 }, padding: 20 } },
+                        tooltip: { 
+			    callbacks: { 
+				title: function(tooltipItems) {
+	                            return activeCategories[tooltipItems[0].dataIndex];
+	                        },
+	                        label: function(context) {
+	                            const percent = ((context.raw / totalSpent) * 100).toFixed(1);
+	                            return ` ${percent}%`;
+	                        }
+			    }
+		        }
+                    },
+                    cutout: '70%'
+                }
+            });
+
+            const sortedExp = [...state.expenses].sort((a, b) => new Date(a.date) - new Date(b.date));
+            const uniqueDates = [...new Set(sortedExp.map(e => e.date))];            
+            const formattedDates = uniqueDates.map(date => {
+                return new Date(date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+            });
+
+            const dailyTotals = uniqueDates.map(date => {
+                return sortedExp.filter(e => e.date === date).reduce((sum, e) => sum + Number(e.amount), 0);
+            });
+
+            const ctxTrend = document.getElementById('spendingTrendChart').getContext('2d');
+            chartInstances.trend = new Chart(ctxTrend, {
+                type: 'line',
+                data: {
+                    labels: formattedDates,
+                    datasets: [{
+                        label: 'Total Spent',
+                        data: dailyTotals,
+                        borderColor: '#4f46e5',
+                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: '#4f46e5',
+                        pointRadius: 4,
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { borderDash: [4, 4] } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            const categoryDatasets = activeCategories.map((cat, index) => {
+                return {
+                    label: cat,
+                    data: uniqueDates.map(date => {
+                        return sortedExp.filter(e => e.date === date && e.category === cat).reduce((sum, e) => sum + Number(e.amount), 0);
+                    }),
+                    borderColor: chartHexColors[index % chartHexColors.length],
+                    backgroundColor: chartHexColors[index % chartHexColors.length],
+                    borderWidth: 2,
+                    pointRadius: 3,
+                    fill: false,
+                    tension: 0.3
+                };
+            });
+
+            const ctxCatTrend = document.getElementById('categoryTrendChart').getContext('2d');
+            chartInstances.catTrend = new Chart(ctxCatTrend, {
+                type: 'line',
+                data: {
+                    labels: formattedDates,
+                    datasets: categoryDatasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, grid: { borderDash: [4, 4] } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+	let activeSegmentIndex = null;
+
+	function highlightSegment(selectedIndex, totalSegments) {
+	    if (activeSegmentIndex === selectedIndex) {
+	        activeSegmentIndex = null;
+	        for (let i = 0; i < totalSegments; i++) {
+	            const segment = document.getElementById(`bar-segment-${i}`);
+	            if (segment) segment.style.opacity = '1';
+	        }
+	    } else {
+	        activeSegmentIndex = selectedIndex;
+	        for (let i = 0; i < totalSegments; i++) {
+	            const segment = document.getElementById(`bar-segment-${i}`);
+	            if (segment) {
+	                if (i === selectedIndex) {
+	                    segment.style.opacity = '1';
+	                } else {
+	                    segment.style.opacity = '0.2';
+	                }
+	            }
+	        }
+	    }
+	}
+
+        function handleExpenseSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('expense-id').value;
+            const amount = document.getElementById('exp-amount').value;
+            const category = document.getElementById('exp-category').value;
+            const date = document.getElementById('exp-date').value;
+            const description = document.getElementById('exp-notes').value;
+
+            if(!id) {
+                const newExpense = { id: 'exp_' + Date.now(), amount, category, date, description };
+                state.expenses.push(newExpense);
+            } else {
+                const index = state.expenses.findIndex(exp => exp.id === id);
+                if(index !== -1) {
+                    state.expenses[index] = { id, amount, category, date, description };
+                }
+            }
+
+            saveData();
+            closeExpenseModal();
+            switchView('dashboard');
+	    showToast(!id ? "Expense added" : "Expense updated");
+        }
+
+        function editExpense(id) {
+            const exp = state.expenses.find(e => e.id === id);
+            if(!exp) return;
+            document.getElementById('form-title').innerText = "Edit Expense";
+            document.getElementById('expense-id').value = exp.id;
+            document.getElementById('exp-amount').value = exp.amount;
+            document.getElementById('exp-category').value = exp.category;
+            document.getElementById('exp-date').value = exp.date;
+            document.getElementById('exp-notes').value = exp.description;
+            openExpenseModal('Update');
+        }
+
+        function deleteExpense(id) {
+            if(confirm('Are you sure you want to remove this expense?')) {
+                state.expenses = state.expenses.filter(e => e.id !== id);
+                saveData();
+                if(document.getElementById('view-dashboard').classList.contains('active')) renderCharts();
+		showToast("Expense deleted");
+            }
+        }
+
+        function resetExpenseForm() {
+            document.getElementById('form-title').innerText = "Add New Expense";
+            document.getElementById('expense-id').value = "";
+            document.getElementById('expense-form').reset();
+            setDefaultDate();
+        }
+
+        function setDefaultDate() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('exp-date').value = today;
+        }
+
+        function formatDate(dateString) {
+            const options = { day: 'numeric', month: 'short', year: 'numeric' };
+            return new Date(dateString).toLocaleDateString('en-IN', options);
+        }
+
+	function openReportModal() {
+	    generateReportPreview();
+	    document.getElementById('report-modal').classList.remove('hidden');
+	}
+
+	function closeReportModal() {
+	    document.getElementById('report-modal').classList.add('hidden');
+	}
+
+	function generateReportPreview() {
+	    const container = document.getElementById('pdf-content');
+	    const totalBudget = state.budget || 0;
+	    const totalSpent = state.expenses.reduce((sum, e) => sum + Number(e.amount), 0);
+	    const remaining = totalBudget - totalSpent;
+	    const uniqueDatesCount = new Set(state.expenses.map(exp => exp.date)).size;
+	    const averagePerDay = uniqueDatesCount > 0 ? Math.round(totalSpent / uniqueDatesCount) : 0;
+	    const spentPercentage = totalBudget > 0 ? Math.round((totalSpent / totalBudget) * 100) : 0;    
+	    const sorted = [...state.expenses].sort((a,b) => new Date(a.date) - new Date(b.date));
+    
+	    let tableRows = sorted.map(exp => `
+	        <tr class="border-b border-gray-100 text-gray-700">
+	            <td class="p-2">${formatDate(exp.date)}</td>
+	            <td class="p-2">${escapeHTML(exp.category)}</td>
+	            <td class="p-2">${escapeHTML(exp.description || '-')}</td>
+	            <td class="p-2 text-right font-medium">₹${Number(exp.amount).toLocaleString('en-IN')}</td>
+	        </tr>
+	    `).join('');
+
+	    if(sorted.length === 0) {
+	        tableRows = `<tr><td colspan="4" class="text-center py-6 text-gray-400">No expense recorded yet.</td></tr>`;
+	    }
+
+	    const chartBarHTML = document.getElementById('segmented-progress-bar').innerHTML;
+	    const chartLegendHTML = document.getElementById('progress-legend').innerHTML;
+	    
+	    container.innerHTML = `
+	        <h1 class="text-2xl font-bold text-center mb-1 text-indigo-700">Expense Report</h1>
+		<p class="text-center text-gray-700 text-xs font-medium mb-1">by ${escapeHTML(state.username)}</p>
+	        <p class="text-center text-gray-500 text-xs mb-3">Generated on ${new Date().toLocaleDateString('en-IN')}</p>
+        
+	        <div class="grid grid-cols-3 gap-2 mb-2">
+	            <div class="bg-gray-50 py-4 rounded-xl border border-gray-200">
+	                <p class="text-xs text-gray-500 uppercase font-semibold text-center">Spent</p>
+	                <p class="text-lg font-bold text-indigo-600 text-center">₹${totalSpent.toLocaleString('en-IN')}</p>
+	            </div>
+	            <div class="bg-gray-50 py-4 rounded-xl border border-gray-200">
+	                <p class="text-xs text-gray-500 uppercase font-semibold text-center">Avg Spent</p>
+	                <p class="text-lg font-bold text-gray-900 text-center">₹${averagePerDay.toLocaleString('en-IN')}</p>
+	            </div>
+	            <div class="bg-gray-50 py-4 rounded-xl border border-gray-200">
+	                <p class="text-xs text-gray-500 uppercase font-semibold text-center">Balance</p>
+        	        <p class="text-lg font-bold ${remaining < 0 ? 'text-red-600' : 'text-green-600'} text-center">₹${remaining.toLocaleString('en-IN')}</p>
+	            </div>
+	        </div>
+
+	        <div class="mb-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
+	            <h3 class="mb-4 text-gray-700 flex items-baseline">
+	                <span class="text-3xl font-extrabold text-gray-800">${spentPercentage}%</span>
+	                <span class="text-sm font-medium text-gray-500 mx-1">of</span> 
+	                <span class="text-xl font-bold text-gray-600">₹${totalBudget.toLocaleString('en-IN')}</span> 
+	                <span class="text-sm font-medium text-gray-500 ml-1">spent</span>
+	            </h3>
+	            <div class="w-full bg-gray-200 rounded-full h-4 flex overflow-hidden mb-4">
+	                ${chartBarHTML || '<div class="w-full text-center text-xs text-gray-400">No data available</div>'}
+	            </div>
+	            <div class="flex flex-col gap-1 mt-2 text-xs">
+	                ${chartLegendHTML}
+	            </div>
+	        </div>
+
+	        <h3 class="text-lg font-bold mb-2 text-gray-800 border-b pb-2">Expenses Record</h3>
+	        <table class="w-full text-left text-sm mb-4">
+	            <thead>
+	                <tr class="bg-gray-100 text-gray-600 uppercase text-xs">
+	                    <th class="py-2 px-2 rounded-tl">Date</th>
+	                    <th class="py-2 px-2">Category</th>
+	                    <th class="py-2 px-2">Description</th>
+	                    <th class="py-2 px-2 text-right rounded-tr">Amount</th>
+	                </tr>
+	            </thead>
+	            <tbody>${tableRows}</tbody>
+	        </table>
+	    `;
+	}
+
+	function downloadReportPDF() {
+	    const element = document.getElementById('pdf-content');
+	    const now = new Date();
+	    const year = now.getFullYear();
+	    const month = String(now.getMonth() + 1).padStart(2, '0');
+	    const day = String(now.getDate()).padStart(2, '0');
+	    const hours = String(now.getHours()).padStart(2, '0');
+	    const minutes = String(now.getMinutes()).padStart(2, '0');
+	    const seconds = String(now.getSeconds()).padStart(2, '0');
+	    const timestamp = `${year}${month}${day}${hours}${minutes}${seconds}`;
+	    const cleanUsername = state.username.replace(/\s+/g, '');
+	    const opt = {
+	        margin:       0.5,
+	        filename:     `HExT_Report_${escapeHTML(cleanUsername)}_${timestamp}.pdf`,
+	        image:        { type: 'jpeg', quality: 0.98 },
+	        html2canvas:  { scale: 2 },
+	        jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+	    };
+	    html2pdf().set(opt).from(element).save();
+	}
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+            );
+        }
+
+	function showToast(message, type = 'success') {
+	    const container = document.getElementById('toast-container');
+	    const toast = document.createElement('div');
+	    const color = type === 'success' ? 'bg-gray-800' : 'bg-red-600';    
+	    toast.className = `${color} text-white px-4 py-2 rounded-full shadow-lg text-sm font-medium transform transition-all duration-300 translate-y-[-100%] opacity-0`;
+	    toast.innerText = message;    
+	    container.appendChild(toast);
+	    requestAnimationFrame(() => {
+	        toast.classList.remove('translate-y-[-100%]', 'opacity-0');
+	    });
+	    setTimeout(() => {
+	        toast.classList.add('translate-y-[-100%]', 'opacity-0');
+	        setTimeout(() => toast.remove(), 300);
+	    }, 2500);
+	}
+
+	document.addEventListener('click', (e) => {
+	    if (typeof activeSegmentIndex !== 'undefined' && activeSegmentIndex !== null) {        
+	        const clickedInsideLegend = e.target.closest('#progress-legend');
+	        const clickedInsideBar = e.target.closest('#segmented-progress-bar');
+	        if (!clickedInsideLegend && !clickedInsideBar) {
+	            activeSegmentIndex = null;
+	            const segments = document.querySelectorAll('[id^="bar-segment-"]');
+	            segments.forEach(segment => {
+	                segment.style.opacity = '1';
+	            });
+	        }
+	    }
+	});
+
+        setDefaultDate();
+        updateMetrics();
+        window.addEventListener('load', () => {
+	    renderCategoryList();
+	    renderUsername();
+	    if (screen.orientation && screen.orientation.lock) {
+		screen.orientation.lock('portrait').catch(function(error) {
+	            console.log("Orientation lock not supported or denied.");
+	    	});
+	    }	
+	    setTimeout(() => renderCharts(), 100); });
+    </script>
+  </body>
+</html>
