@@ -2,10 +2,10 @@
   "name": "Home Expense Tracker",
   "short_name": "HExT",
   "start_url": "./index.html",
-  "display": "fullscreen",
+  "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#4f46e5",
-  "orientation": "standalone",
+  "orientation": "portrait",
   "icons": [
     {
             "src": "./HExT-app-icon-192.png",
