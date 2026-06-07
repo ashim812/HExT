@@ -279,7 +279,11 @@
 	 <div class="p-4 bg-indigo-700 text-white flex justify-between items-center shadow-md">
 	     <h2 class="text-xl font-bold">Report Preview</h2>
 	     <div class="flex gap-4">
-	         <button onclick="downloadReportPDF()" class="bg-white text-indigo-700 px-4 py-2 rounded font-bold hover:bg-gray-100 transition shadow"><i class="fa-solid fa-download mr-2"></i>PDF</button>
+	         <button id="btn-download-pdf" onclick="downloadReportPDF()" class="bg-white text-indigo-700 px-4 py-2 rounded font-bold hover:bg-gray-100 transition shadow flex items-center justify-center min-w-[100px]">
+		     <i id="pdf-icon-dl" class="fa-solid fa-download mr-2"></i>
+		     <i id="pdf-icon-spin" class="fa-solid fa-circle-notch fa-spin mr-2 hidden"></i>
+		     <span id="pdf-btn-text">PDF</span>
+		 </button>
 	         <button onclick="closeReportModal()" class="text-white hover:text-gray-300 transition"><i class="fa-solid fa-xmark text-2xl"></i></button>
 	      </div>
 	 </div>
@@ -456,6 +460,7 @@
             saveData();
             closeBudgetModal();
             switchView('dashboard');
+	    showToast("Budget Set");
         }
 
 	function toggleDateInputs() {
@@ -561,6 +566,7 @@
 	        saveData();
 	        renderCategoryList();
 	        input.value = '';
+		showToast("New Category added");
 	    }
 	}
 
@@ -587,6 +593,7 @@
 	        }
 	        saveData();
 	        renderCategoryList();
+		showToast("Category updated");
 	    }
 	}
 
@@ -1197,6 +1204,16 @@
 	}
 
 	function downloadReportPDF() {
+	    const btn = document.getElementById('btn-download-pdf');
+	    const iconDl = document.getElementById('pdf-icon-dl');
+	    const iconSpin = document.getElementById('pdf-icon-spin');
+	    const btnText = document.getElementById('pdf-btn-text');
+	    btn.disabled = true;
+	    btn.classList.add('opacity-75', 'cursor-not-allowed');
+	    iconDl.classList.add('hidden');
+	    iconSpin.classList.remove('hidden');
+	    btnText.innerText = 'Wait...';
+
 	    const element = document.getElementById('pdf-content');
 	    const now = new Date();
 	    const year = now.getFullYear();
@@ -1214,7 +1231,25 @@
 	        html2canvas:  { scale: 2 },
 	        jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
 	    };
-	    html2pdf().set(opt).from(element).save();
+	    const worker = html2pdf().set(opt).from(element);
+	    worker.save().then(() => {
+		btn.disabled = false;
+	        btn.classList.remove('opacity-75', 'cursor-not-allowed');
+	        iconSpin.classList.add('hidden');
+	        iconDl.classList.remove('hidden');
+	        btnText.innerText = 'PDF';
+	        showToast('Report downloaded', 'success');
+
+	    }).catch(err => {
+	        btn.disabled = false;
+	        btn.classList.remove('opacity-75', 'cursor-not-allowed');
+	        iconSpin.classList.add('hidden');
+	        iconDl.classList.remove('hidden');
+	        btnText.innerText = 'PDF';
+        
+	        showToast('Error generating PDF', 'error');
+	        console.error(err);
+	    });
 	}
 
         function escapeHTML(str) {
