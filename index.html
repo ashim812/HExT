@@ -32,13 +32,10 @@
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans pb-20">
-    <header class="bg-indigo-700 text-white shadow-md sticky top-0 z-30">
+    <header class="bg-white/40 backdrop-blur-xl text-black shadow-sm sticky top-0 z-30">
         <div class="max-w-4xl mx-auto px-5 py-2 flex justify-between items-center">
-            <h1 class="text-xl font-bold tracking-wide flex items-center gap-2">🏡 EXPENSE TRACKER</h1>
-            <button id="settings-toggle-btn" onclick="toggleSettingsView()" class="p-1 rounded-full hover:bg-indigo-800 transition focus:outline-none">
-                <i id="icon-cog" class="fa-solid fa-gear text-xl"></i>
-                <i id="icon-close" class="fa-solid fa-xmark text-2xl hidden"></i>
-            </button>
+            <h1 class="text-xl font-bold tracking-wide flex items-center gap-2"> <i class="fa-solid fa-house-chimney"></i> EXPENSE TRACKER</h1>
+            <button id="plus-btn" onclick="openExpenseModal('Add')" class="p-1 rounded-full hover:bg-white-800 transition focus:outline-none"><i class="fa-solid fa-plus text-2xl"></i></button>
         </div>
     </header>
     <main class="max-w-4xl mx-auto px-4 py-2">
@@ -56,8 +53,11 @@
                 <p class="text-lg md:text-xl font-bold text-green-600" id="stat-remaining" style="text-align:center">₹0</p>
             </div>
         </div>
-        <div id="settings-heading" class="hidden mb-6">
+        <div id="settings-heading" class="hidden m-3 flex justify-between items-center">
             <h2 class="text-2xl font-bold text-gray-800">Settings</h2>
+	    <button onclick="resetAppData()" class="bg-red-500 hover:bg-red-600 text-white text-sm font-bold py-1.5 px-4 rounded-full shadow transition-colors focus:outline-none focus:ring-2 focus:ring-red-400"><i class="fas fa-rotate"></i>
+                Reset
+            </button>
         </div>
 
         <section id="view-dashboard" class="view-section active space-y-6">
@@ -167,7 +167,7 @@
             </div>
         </section>
 
-        <section id="view-app-settings" class="view-section">
+        <section id="view-settings" class="view-section">
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 divide-y divide-gray-100 overflow-hidden">
                 <div onclick="editUsername()" class="flex items-center p-4 hover:bg-gray-50 cursor-pointer transition">
                     <div class="px-3 py-2 bg-indigo-50 text-indigo-600 rounded-lg mr-4">
@@ -212,44 +212,53 @@
         </section>
     </main>
 
-    <div id="expense-overlay" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-30 hidden transition-all duration-300 opacity-0" onclick="closeExpenseModal()"></div>
+    <div id="expense-overlay" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 hidden transition-all duration-300 opacity-0" onclick="closeExpenseModal()"></div>
 
-    <div id="expense-modal" class="fixed bottom-[0px] left-0 right-0 max-w-4xl mx-auto bg-white rounded-t-3xl shadow-[0_-10px_25px_-5px_rgba(0,0,0,0.15)] z-40 transform translate-y-full transition-transform duration-300 ease-in-out p-6 pb-16 border-t border-gray-100">
-        <h3 class="text-xl font-bold mb-4 text-gray-800 text-center" id="form-title">Add New Expense</h3>
-        <form id="expense-form" class="space-y-4" onsubmit="handleExpenseSubmit(event)">
-            <input type="hidden" id="expense-id">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-600 mb-1">Amount (₹)</label>
-                    <input type="number" id="exp-amount" required min="1" class="w-full border p-2 rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-600 mb-1">Category</label>
-                    <select id="exp-category" required class="w-full border p-2 rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none">
-			<option value="Milk">Milk</option>
-                        <option value="Groceries">Groceries</option>
-                        <option value="Fashion">Fashion</option>
-                        <option value="Utility Bill">Utility Bill</option>
-                        <option value="Stationery">Stationery</option>
-                        <option value="Fees">Fees</option>
-                        <option value="Vegetables & Fruits">Vegetables & Fruits</option>
-                        <option value="Medical">Medical</option>
-                        <option value="Miscellaneous">Miscellaneous</option>
-                    </select>
-                </div>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
-                <div>
-                    <label class="block text-sm font-medium text-gray-600 mb-1">Date</label>
-                    <input type="date" id="exp-date" required class="w-full border p-2 rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-600 mb-1">Remarks / Description</label>
-                    <input type="text" id="exp-notes" class="w-full border p-2 rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none">
-                </div>
-            </div>
-        </form>
-    </div>
+    <div id="expense-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center px-4 pointer-events-none">
+	<div id="expense-modal-content" class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 transform scale-95 opacity-0 transition-all duration-300 ease-out pointer-events-auto max-h-[90vh] overflow-y-auto">
+	    <div class="flex justify-center items-center mb-4">
+	        <h3 class="text-xl font-bold mb-4 text-gray-800 text-center" id="form-title">Add New Expense</h3>
+	    </div>
+	    <form id="expense-form" class="space-y-4" onsubmit="handleExpenseSubmit(event)">
+	        <input type="hidden" id="expense-id">
+	        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        	    <div>
+	                <label class="block text-sm font-medium text-gray-600 mb-1">Amount (₹)</label>
+	                <input type="number" id="exp-amount" required min="1" class="w-full border p-2 rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none">
+	            </div>
+	            <div>
+	                <label class="block text-sm font-medium text-gray-600 mb-1">Category</label>
+	                <select id="exp-category" required class="w-full border p-2 rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none">
+	                    <option value="Milk">Milk</option>
+	                    <option value="Groceries">Groceries</option>
+	                    <option value="Fashion">Fashion</option>
+	                    <option value="Utility Bill">Utility Bill</option>
+	                    <option value="Stationery">Stationery</option>
+	                    <option value="Fees">Fees</option>
+	                    <option value="Vegetables & Fruits">Vegetables & Fruits</option>
+	                    <option value="Medical">Medical</option>
+	                    <option value="Miscellaneous">Miscellaneous</option>
+	                </select>
+	            </div>
+	        </div>
+	        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
+	            <div>
+	                <label class="block text-sm font-medium text-gray-600 mb-1">Date</label>
+	                <input type="date" id="exp-date" required class="w-full border p-2 rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none">
+	            </div>
+	            <div>
+	                <label class="block text-sm font-medium text-gray-600 mb-1">Remarks / Description</label>
+	                <input type="text" id="exp-notes" class="w-full border p-2 rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none">
+	            </div>
+		</div>
+		    <div class="mt-6">
+	                <button id="modal-submit-btn" type="submit" class="w-full bg-indigo-600 text-white px-8 py-3 rounded-xl shadow-lg font-bold hover:bg-indigo-700 transition-all duration-300 transform hover:scale-[1.01]">
+	                    Add
+	                </button>
+	            </div>
+	        </form>
+	    </div>
+	</div>
 
     <div id="budget-modal" class="fixed inset-0 backdrop-blur-sm z-50 hidden flex items-center justify-center px-4">
         <div class="absolute inset-0 bg-black/50" onclick="closeBudgetModal()"></div>        
@@ -276,15 +285,15 @@
      </div>
 
      <div id="report-modal" class="fixed inset-0 z-50 hidden bg-gray-100 flex flex-col">
-	 <div class="p-4 bg-indigo-700 text-white flex justify-between items-center shadow-md">
-	     <h2 class="text-xl font-bold">Report Preview</h2>
+	 <div class="bg-white/40 backdrop-blur-sm text-black shadow-md px-5 py-3 flex justify-between items-center z-10">
+	     <h2 class="text-xl font-bold tracking-wide">Report Preview</h2>
 	     <div class="flex gap-4">
-	         <button id="btn-download-pdf" onclick="downloadReportPDF()" class="bg-white text-indigo-700 px-4 py-2 rounded font-bold hover:bg-gray-100 transition shadow flex items-center justify-center min-w-[100px]">
+	         <button id="btn-download-pdf" onclick="downloadReportPDF()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-indigo-700 transition shadow flex items-center justify-center min-w-[100px]">
 		     <i id="pdf-icon-dl" class="fa-solid fa-download mr-2"></i>
 		     <i id="pdf-icon-spin" class="fa-solid fa-circle-notch fa-spin mr-2 hidden"></i>
 		     <span id="pdf-btn-text">PDF</span>
 		 </button>
-	         <button onclick="closeReportModal()" class="text-white hover:text-gray-300 transition"><i class="fa-solid fa-xmark text-2xl"></i></button>
+	         <button onclick="closeReportModal()" class="text-gray-600 hover:text-black transition focus:outline-none"><i class="fa-solid fa-xmark text-2xl"></i></button>
 	      </div>
 	 </div>
 	 <div class="flex-1 overflow-y-auto p-4 md:p-8">
@@ -293,24 +302,19 @@
 	 </div>
      </div>
 
-    <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] flex justify-evenly items-center text-xs z-50 pb-[env(safe-area-inset-bottom)] transition-transform duration-300">
-        <button id="nav-btn-dashboard" onclick="switchView('dashboard')" class="flex flex-col items-center gap-1 text-indigo-600 font-medium w-16">
-            <span><i class="fa-solid fa-magnifying-glass-chart"></i></span>Analytics
+    <nav id="bottom-nav" class="fixed bottom-3 left-1/2 transform -translate-x-1/2 w-[90%] max-w-sm bg-white/40 backdrop-blur-xl border border-gray-200 shadow-[0_8px_30px_rgb(0,0,0,0.12)] rounded-full flex justify-around items-center text-xs z-30 py-3 transition-transform duration-300">
+        <button id="nav-btn-analytics" onclick="switchView('dashboard')" class="flex flex-col items-center text-indigo-600 font-medium w-16 transition-colors">
+            <span><i class="fas fa-magnifying-glass-chart text-lg"></i></span>Analytics
         </button>
 
-        <div class="relative flex justify-center items-center w-28 h-12">
-            <button id="nav-plus-btn" onclick="openExpenseModal('Add')" type="button" class="absolute bottom-2 bg-indigo-600 text-white w-14 h-14 rounded-full flex justify-center items-center shadow-lg shadow-indigo-600/30 hover:bg-indigo-700 transition-all duration-300 transform hover:scale-95">
-                <i class="fa-solid fa-plus text-3xl"></i>
-            </button>
-            
-            <button id="nav-submit-btn" form="expense-form" type="submit" class="absolute bottom-1 hidden bg-indigo-600 text-white px-8 py-3 rounded-full shadow-lg font-bold hover:bg-indigo-700 transition-all duration-300 transform hover:scale-105">
-                Add
-            </button>
-        </div>
+        <button id="nav-btn-expenses" onclick="switchView('expenses')" class="flex flex-col items-center text-gray-500 hover:text-indigo-600 w-16 transition-colors">
+            <span><i class="fas fa-book text-lg"></i></span>Expenses
+        </button> 
 
-        <button id="nav-btn-expenses" onclick="switchView('expenses')" class="flex flex-col items-center gap-1 text-gray-500 hover:text-indigo-600 w-16">
-            <span><i class="fa-solid fa-coins"></i></span>Expenses
-        </button>        
+	<button id="nav-btn-settings" onclick="switchView('settings')" class="flex flex-col items-center text-gray-500 hover:text-indigo-600 w-16 transition-colors">
+	    <i class="fa-solid fa-gear text-lg"></i>
+	    <span>Settings</span>
+	</button>       
     </nav>
     <div id="toast-container" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-[100] flex flex-col gap-2 pointer-events-none"></div>
 
@@ -365,7 +369,7 @@
         function switchView(viewName) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.getElementById(`view-${viewName}`).classList.add('active');
-	    const isSettings = viewName === 'app-settings' || viewName === 'budget';
+	    const isSettings = viewName === 'settings' || viewName === 'budget';
             const summaryCards = document.getElementById('summary-cards');
             if (viewName === 'dashboard') {
                 summaryCards.classList.remove('hidden');
@@ -373,76 +377,64 @@
                 summaryCards.classList.add('hidden');
             }
 
-            const bottomNav = document.getElementById('bottom-nav');
-            if (isSettings) {
-                bottomNav.classList.add('hidden');
-            } else {
-                bottomNav.classList.remove('hidden');
-            }
-
             if (!isSettings) {
-                document.getElementById('icon-cog').classList.remove('hidden');
-                document.getElementById('icon-close').classList.add('hidden');
                 document.getElementById('settings-heading').classList.add('hidden');
             } else {
-                document.getElementById('icon-cog').classList.add('hidden');
-                document.getElementById('icon-close').classList.remove('hidden');
                 document.getElementById('settings-heading').classList.remove('hidden');
             }
 	
-	    const btnDashboard = document.getElementById('nav-btn-dashboard');
+	    const btnDashboard = document.getElementById('nav-btn-analytics');
             const btnExpenses = document.getElementById('nav-btn-expenses');
+	    const btnSettings = document.getElementById('nav-btn-settings');
 
-            if (btnDashboard && btnExpenses) {
-                btnDashboard.className = "flex flex-col items-center gap-1 text-gray-500 hover:text-indigo-600 w-16 transition-colors";
-                btnExpenses.className = "flex flex-col items-center gap-1 text-gray-500 hover:text-indigo-600 w-16 transition-colors";
+            if (btnDashboard && btnExpenses && btnSettings) {
+                btnDashboard.className = "flex flex-col items-center text-gray-500 hover:text-indigo-600 w-16 transition-colors";
+                btnExpenses.className = "flex flex-col items-center text-gray-500 hover:text-indigo-600 w-16 transition-colors";
+		btnSettings.className = "flex flex-col items-center text-gray-500 hover:text-indigo-600 w-16 transition-colors";
                 if (viewName === 'dashboard') {
-                    btnDashboard.className = "flex flex-col items-center gap-1 text-indigo-600 font-medium w-16 transition-colors";
+                    btnDashboard.className = "flex flex-col items-center text-indigo-600 font-medium w-16 transition-colors";
                 } else if (viewName === 'expenses') {
-                    btnExpenses.className = "flex flex-col items-center gap-1 text-indigo-600 font-medium w-16 transition-colors";
-                }
+                    btnExpenses.className = "flex flex-col items-center text-indigo-600 font-medium w-16 transition-colors";
+                } else if (viewName === 'settings') {
+	            btnSettings.className = "flex flex-col items-center text-indigo-600 font-medium w-16 transition-colors";
+	        }
             }
 
             if (viewName === 'dashboard') renderCharts();
         }
 
-        function toggleSettingsView() {
-            const appSettingsView = document.getElementById('view-app-settings');
-	    const isSettingsActive = appSettingsView && appSettingsView.classList.contains('active');
-            
-            if (isSettingsActive) {
-                switchView('dashboard');
-            } else {
-                switchView('app-settings');
-                document.getElementById('icon-cog').classList.add('hidden');
-                document.getElementById('icon-close').classList.remove('hidden');
-            }
-        }
-
 	function openExpenseModal(mode = 'Add') {
+	    if (mode === 'Add' && (!state.budget || state.budget <= 0)) {
+	        showToast("Set Budget first", "error");
+	        openBudgetModal();
+	        return;                                
+	    }
             const overlay = document.getElementById('expense-overlay');
             const modal = document.getElementById('expense-modal');
-            const plusBtn = document.getElementById('nav-plus-btn');
-            const submitBtn = document.getElementById('nav-submit-btn');
+            const modalContent = document.getElementById('expense-modal-content');
+            const submitBtn = document.getElementById('modal-submit-btn');
             overlay.classList.remove('hidden');
-            setTimeout(() => overlay.classList.remove('opacity-0'), 10);
-            modal.classList.remove('translate-y-full');
-            plusBtn.classList.add('hidden');
-            submitBtn.classList.remove('hidden');
-            submitBtn.innerText = mode;
+	    modal.classList.remove('hidden');
+            setTimeout(() => {
+	        overlay.classList.remove('opacity-0');
+	        modalContent.classList.remove('scale-95', 'opacity-0');
+	        modalContent.classList.add('scale-100', 'opacity-100');
+	    }, 10);
+            submitBtn.innerText = mode === 'Add' ? 'Add Expense' : 'Update Expense';
         }
 
         function closeExpenseModal() {
             const overlay = document.getElementById('expense-overlay');
             const modal = document.getElementById('expense-modal');
-            const plusBtn = document.getElementById('nav-plus-btn');
-            const submitBtn = document.getElementById('nav-submit-btn');
-            modal.classList.add('translate-y-full');
+	    const modalContent = document.getElementById('expense-modal-content');
             overlay.classList.add('opacity-0');
-            setTimeout(() => overlay.classList.add('hidden'), 300);
-            submitBtn.classList.add('hidden');
-            plusBtn.classList.remove('hidden');
-            resetExpenseForm();
+	    modalContent.classList.remove('scale-100', 'opacity-100');
+	    modalContent.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+	        overlay.classList.add('hidden');
+	        modal.classList.add('hidden');
+	        resetExpenseForm();
+	    }, 300);
         }
 
 	function openBudgetModal() {
@@ -1121,10 +1113,12 @@
 	function openReportModal() {
 	    generateReportPreview();
 	    document.getElementById('report-modal').classList.remove('hidden');
+	    document.getElementById('bottom-nav').classList.add('hidden');
 	}
 
 	function closeReportModal() {
 	    document.getElementById('report-modal').classList.add('hidden');
+	    document.getElementById('bottom-nav').classList.remove('hidden');
 	}
 
 	function generateReportPreview() {
@@ -1257,6 +1251,21 @@
                 tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
             );
         }
+
+	function resetAppData() {
+	    const isConfirmed = confirm("Are you sure you want to delete all expenses and reset the budget?");
+    
+	    if (isConfirmed) {
+	        state.expenses = [];
+	        state.budget = 0;
+	        saveData();
+	        updateMetrics();
+	        if (document.getElementById('view-dashboard').classList.contains('active')) {
+	            renderCharts();
+	        }
+	        showToast("App has been reset", "success");
+	    }
+	}
 
 	function showToast(message, type = 'success') {
 	    const container = document.getElementById('toast-container');
