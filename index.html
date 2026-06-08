@@ -523,13 +523,21 @@
 	    container.innerHTML = state.categories.map((cat, index) => {
             const isDisabled = state.disabledCategories.includes(cat);
             return`
-	        <div class="p-3 flex justify-between items-center bg-white hover:bg-gray-50 transition">
-	        <div class="flex items-center gap-3">
-                    <input type="checkbox" class="cursor-pointer w-4 h-4 text-indigo-600 rounded" 
-                           ${!isDisabled ? 'checked' : ''} 
-                           onchange="toggleCategoryActive(${index}, this.checked)">
+	        <div class="p-3 flex justify-between items-center bg-white hover:bg-gray-50 transition border-b border-gray-100 cursor-move"
+		     draggable="true"
+	             data-index="${index}"
+	             ondragstart="handleDragStart(event)"
+	             ondragover="handleDragOver(event)"
+	             ondragleave="handleDragLeave(event)"
+	             ondrop="handleDrop(event)"
+	             ondragend="handleDragEnd(event)">
+		    <div class="flex items-center gap-3">
+			<i class="fa-solid fa-grip-vertical text-gray-400"></i>
+	                <input type="checkbox" class="cursor-pointer w-4 h-4 text-indigo-600 rounded" 
+	                       ${!isDisabled ? 'checked' : ''} 
+	                       onchange="toggleCategoryActive(${index}, this.checked)">
 	                <span class="text-sm font-medium ${isDisabled ? 'text-gray-400 line-through' : 'text-gray-800'}">${escapeHTML(cat)}</span>
-                </div>
+	            </div>
 	            <div class="flex gap-1">
 	                <button onclick="editCategory(${index})" type="button" class="text-xs bg-gray-100 hover:bg-indigo-100 hover:text-indigo-600 p-1.5 px-2 rounded text-gray-600 transition"><i class="fa-solid fa-pencil"></i></button>
 	                <button onclick="deleteCategory(${index})" type="button" class="text-xs bg-gray-100 hover:bg-red-100 p-1.5 px-2 rounded text-gray-600 transition"><i class="fa-solid fa-trash-can"></i></button>
@@ -804,6 +812,41 @@
             `).join('');
 	    updateSelectionCounter();
         }
+
+	let draggedCatIndex = null;
+
+	function handleDragStart(e) {
+	    draggedCatIndex = parseInt(e.currentTarget.dataset.index);
+	    e.dataTransfer.effectAllowed = "move";
+	    setTimeout(() => e.currentTarget.classList.add('opacity-50'), 0);
+	}
+
+	function handleDragOver(e) {
+	    e.preventDefault(); // Necessary to allow dropping
+	    e.dataTransfer.dropEffect = "move";
+	    e.currentTarget.classList.add('bg-indigo-50', 'border-indigo-200'); 
+	}
+
+	function handleDragLeave(e) {
+	    e.currentTarget.classList.remove('bg-indigo-50', 'border-indigo-200');
+	}
+
+	function handleDrop(e) {
+	    e.preventDefault();
+	    e.currentTarget.classList.remove('bg-indigo-50', 'border-indigo-200');    
+	    const targetIndex = parseInt(e.currentTarget.dataset.index);    
+	    if (draggedCatIndex !== null && draggedCatIndex !== targetIndex) {
+	        const movedItem = state.categories.splice(draggedCatIndex, 1)[0];
+	        state.categories.splice(targetIndex, 0, movedItem);
+	        saveData();
+	        renderCategoryList();
+	    }
+	}
+
+	function handleDragEnd(e) {
+	    e.currentTarget.classList.remove('opacity-50');
+	    draggedCatIndex = null;
+	}
 
         function renderCharts() {
             const totalsByCategory = {};
