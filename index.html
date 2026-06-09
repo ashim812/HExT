@@ -86,7 +86,7 @@
     </style>
 </head>
 <body class="bg-gradient-to-br from-indigo-50 via-fuchsia-50 to-teal-50 bg-fixed bg-cover bg-no-repeat text-gray-800 font-sans hide-scrollbar pb-16">
-    <header class="liquid-glass text-gray-800 shadow-[0_8px_30px_rgb(0,0,0,0.12)] sticky z-40 top-3 mx-auto w-[95%] max-w-4xl rounded-full pl-3 pr-2.5 py-1 m-2 flex justify-between items-center transition-all duration-300">
+    <header class="liquid-glass text-gray-800 shadow-[0_8px_30px_rgb(0,0,0,0.12)] sticky z-40 top-3 mx-auto w-[95%] max-w-4xl rounded-full pl-4 pr-2.5 py-1 m-2 flex justify-between items-center transition-all duration-300">
 	    <h1 class="text-xl font-bold tracking-wide flex items-center gap-1.5">
 	        <i class="fa-solid fa-house-chimney text-xl"></i> 
 	        <span>EXPENSE TRACKER</span>
@@ -153,7 +153,7 @@
         </section>
 
         <section id="view-expenses" class="view-section space-y-3">
-	    <div class="bg-white p-1 pl-2 pr-0 rounded-xl flex overflow-x-auto hide-scrollbar gap-2 items-center text-sm sticky z-30 shadow-sm">
+	    <div class="bg-white p-1 pl-2 pr-0 rounded-xl flex overflow-x-auto hide-scrollbar gap-2 items-center text-sm relative">
 		  <div class="flex items-center gap-0.5 shrink-0 min-w-[110px] border-r pr-2 border-gray-200">
                     <i class="fa-solid fa-sort text-gray-400"></i>
                     <select id="sort-by" onchange="renderExpenseList()" class="w-full border-none outline-none bg-transparent text-gray-700 cursor-pointer">
@@ -346,7 +346,7 @@
     </div>
 
      <div id="report-modal" class="fixed inset-0 z-50 hidden liquid-glass flex flex-col transform scale-95 opacity-0 transition-all duration-300 ease-out origin-center">
-	 <div class="liquid-glass text-gray-800 shadow-[0_8px_30px_rgb(0,0,0,0.12)] sticky z-10 top-2 mx-auto w-[95%] max-w-4xl rounded-full pl-3 pr-2.5 py-1 m-1 flex justify-between items-center transition-all duration-300">
+	 <div class="liquid-glass text-gray-800 shadow-[0_8px_30px_rgb(0,0,0,0.12)] sticky z-10 top-2 mx-auto w-[95%] max-w-4xl rounded-full pl-4 pr-2.5 py-1 m-1 flex justify-between items-center transition-all duration-300">
 	     <h2 class="text-xl font-bold tracking-wide">Report Preview</h2>
 	     <div class="flex gap-2 items-center">
 	         <button id="btn-download-pdf" onclick="downloadReportPDF()" class="text-indigo-600 px-4 py-1.5 rounded-full font-bold hover:bg-white/60 bg-white/30 border border-white/50 font-bold transition-all shadow-sm flex items-center justify-center min-w-[70px] transform hover:scale-105">
@@ -563,7 +563,6 @@
             state.budget = Number(document.getElementById('single-budget-input').value) || 0;
             saveData();
             toggleModal('budget', false);
-            switchView('dashboard');
 	    showToast("Budget Set");
         }
 
@@ -1194,7 +1193,6 @@
             saveData();
 	    updateMetrics();
             toggleModal('expense', false); resetExpenseForm();
-            switchView('dashboard');
 	    showToast(!id ? "Expense added" : "Expense updated");
         }
 
