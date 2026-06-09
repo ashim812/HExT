@@ -440,7 +440,7 @@
 	    const isMovingRight = targetIndex > currentIndex;
 	    const oldView = document.getElementById(`view-${currentActiveView}`);
 	    const newView = document.getElementById(`view-${viewName}`);
-	    const isSettings = viewName === 'app-settings' || viewName === 'budget';
+	    const isSettings = viewName === 'settings' || viewName === 'budget';
 	    const summaryCards = document.getElementById('summary-cards');
     
 	    if (viewName === 'dashboard') {
@@ -464,7 +464,7 @@
 	        const activeClass = "flex flex-col items-center text-indigo-600 font-medium w-16 transition-colors";        
 	        btnDashboard.className = viewName === 'dashboard' ? activeClass : inactiveClass;
 	        btnExpenses.className = viewName === 'expenses' ? activeClass : inactiveClass;
-	        btnSettings.className = viewName === 'app-settings' ? activeClass : inactiveClass;
+	        btnSettings.className = viewName === 'settings' ? activeClass : inactiveClass;
 	    }
 
 	    if (isMovingRight) {
