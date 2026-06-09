@@ -347,10 +347,10 @@
     </div>
 
      <div id="report-modal" class="fixed inset-0 z-50 hidden liquid-glass flex flex-col transform scale-95 opacity-0 transition-all duration-300 ease-out origin-center">
-	 <div class="liquid-glass text-gray-800 shadow-[0_8px_30px_rgb(0,0,0,0.12)] sticky z-10 top-3 mx-auto w-[95%] max-w-4xl rounded-full px-4 py-1 m-2 flex justify-between items-center transition-all duration-300">
+	 <div class="text-black shadow-[0_8px_30px_rgb(0,0,0,0.12)] sticky z-10 top-3 mx-auto w-[95%] max-w-4xl rounded-full px-4 py-1 m-2 flex justify-between items-center transition-all duration-300">
 	     <h2 class="text-xl font-bold tracking-wide">Report Preview</h2>
 	     <div class="flex gap-6">
-	         <button id="btn-download-pdf" onclick="downloadReportPDF()" class="liquid-glass text-indigo-600 px-3 py-1 rounded-full font-bold hover:liquid-glass transition shadow flex items-center justify-center min-w-[80px]">
+	         <button id="btn-download-pdf" onclick="downloadReportPDF()" class="text-indigo-600 px-3 py-1 rounded-full font-bold hover:liquid-glass transition shadow flex items-center justify-center min-w-[70px]">
 		     <i id="pdf-icon-dl" class="fa-solid fa-download mr-2"></i>
 		     <i id="pdf-icon-spin" class="fa-solid fa-circle-notch fa-spin mr-2 hidden"></i>
 		     <span id="pdf-btn-text">PDF</span>
@@ -384,7 +384,7 @@
 	let chartInstances = { doughnut: null, trend: null, catTrend: null };
 
 	const chartHexColors = [
-	    '#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
+	    '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
             '#ec4899', '#06b6d4', '#14b8a6', '#64748b', '#a855f7'
 	];
 
@@ -983,7 +983,7 @@
 
             const activeCategories = Object.keys(totalsByCategory).filter(k => totalsByCategory[k] > 0);
             const colors = [
-                'bg-indigo-600', 'bg-emerald-500', 'bg-amber-500', 'bg-red-500', 'bg-purple-500', 
+                'bg-blue-600', 'bg-emerald-500', 'bg-amber-500', 'bg-red-500', 'bg-purple-500', 
                 'bg-pink-500', 'bg-cyan-500', 'bg-teal-500', 'bg-slate-500', 'bg-fuchsia-500'
             ];
 
@@ -1129,11 +1129,11 @@
                     datasets: [{
                         label: 'Total Spent',
                         data: dailyTotals,
-                        borderColor: '#4f46e5',
-                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
                         borderWidth: 2,
                         pointBackgroundColor: '#ffffff',
-                        pointBorderColor: '#4f46e5',
+                        pointBorderColor: '#3b82f6',
                         pointRadius: 4,
                         fill: true,
                         tension: 0.3
