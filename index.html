@@ -233,7 +233,7 @@
                     </div>
                 </div>
 
-                <div onclick="openBudgetModal()" class="flex items-center p-4 hover:bg-gray-50 cursor-pointer transition">
+                <div onclick="toggleModal('budget', true)" class="flex items-center p-4 hover:bg-gray-50 cursor-pointer transition">
                     <div class="p-2 bg-emerald-50 text-emerald-600 rounded-lg mr-4">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
@@ -244,7 +244,7 @@
                     </div>
                 </div>
 
-                <div onclick="openCategoryModal()" class="flex items-center p-4 hover:bg-gray-50 cursor-pointer transition">
+                <div onclick="toggleModal('category', true); renderCategoryList();" class="flex items-center p-4 hover:bg-gray-50 cursor-pointer transition">
                     <div class="p-2 bg-amber-50 text-amber-600 rounded-lg mr-4">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path>
@@ -267,7 +267,7 @@
         </section>
     </main>
 
-    <div id="expense-overlay" class="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 hidden transition-all duration-300 opacity-0" onclick="closeExpenseModal()"></div>
+    <div id="expense-overlay" class="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 hidden transition-all duration-300 opacity-0" onclick="toggleModal('expense', false); resetExpenseForm();"></div>
 
     <div id="expense-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center px-4 pointer-events-none">
 	<div id="expense-modal-content" class="liquid-glass rounded-2xl shadow-2xl w-full max-w-md p-6 transform scale-95 opacity-0 transition-all duration-300 ease-out pointer-events-auto max-h-[90vh] overflow-y-auto">
@@ -315,7 +315,7 @@
 	    </div>
 	</div>
 
-    <div id="budget-overlay" class="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 hidden transition-opacity duration-300 opacity-0" onclick="closeBudgetModal()"></div>
+    <div id="budget-overlay" class="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 hidden transition-opacity duration-300 opacity-0" onclick="toggleModal('budget', false)"></div>
 
     <div id="budget-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center px-4 pointer-events-none">
         <div id="budget-modal-content" class="liquid-glass rounded-xl shadow-lg w-full max-w-sm p-6 relative transform scale-95 opacity-0 transition-all duration-300 ease-out pointer-events-auto">
@@ -327,15 +327,12 @@
         </div>
     </div>
 
-    <div id="category-overlay" class="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 hidden transition-opacity duration-300 opacity-0" onclick="closeCategoryModal()"></div>
+    <div id="category-overlay" class="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 hidden transition-opacity duration-300 opacity-0" onclick="toggleModal('category', false)"></div>
 
     <div id="category-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center px-4 pointer-events-none">
         <div id="category-modal-content" class="liquid-glass rounded-xl shadow-lg w-full max-w-md p-6 relative max-h-[80vh] flex flex-col transform scale-95 opacity-0 transition-all duration-300 ease-out pointer-events-auto">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold text-gray-800 flex-1 text-center pl-6">Categories</h3>
-                <button onclick="closeCategoryModal()" class="text-gray-500 hover:text-gray-800 transition focus:outline-none">
-                    <i class="fa-solid fa-xmark text-xl"></i>
-                </button>
             </div>
             <div id="category-list" class="overflow-y-auto flex-1 divide-y divide-white/40 mb-4 max-h-64">
             </div>
@@ -392,12 +389,22 @@
             "Milk", "Groceries", "Fashion", "Utility Bill", "Stationery", "Fees", "Vegetables & Fruits", "Medical", "Miscellaneous"
         ];
 
+	function loadSafeJSON(key, fallback) {
+	    try {
+	        const item = localStorage.getItem(key);
+	        return item ? JSON.parse(item) : fallback;
+	    } catch (e) {
+	        console.warn(`Data error for ${key}, using defaults.`);
+	        return fallback;
+	    }
+	}
+	
 	let state = {
 	    username: localStorage.getItem('hext_username') || 'User',
-	    expenses: JSON.parse(localStorage.getItem('hext_expenses')) || [],
+	    expenses: loadSafeJSON('hext_expenses', []),
 	    budget: Number(localStorage.getItem('hext_budget')) || 0,
-	    categories: JSON.parse(localStorage.getItem('hext_categories')) || ["Milk", "Groceries", "Fashion", "Utility Bill", "Stationery", "Fees", "Vegetables & Fruits", "Medical", "Miscellaneous"],
-	    disabledCategories: JSON.parse(localStorage.getItem('hext_disabled_categories')) || []
+	    categories: loadSafeJSON('hext_categories', ["Milk", "Groceries", "Fashion", "Utility Bill", "Stationery", "Fees", "Vegetables & Fruits", "Medical", "Miscellaneous"]),
+	    disabledCategories: loadSafeJSON('hext_disabled_categories', [])
 	};
 
         function saveData() {
@@ -406,7 +413,6 @@
             localStorage.setItem('hext_budget', state.budget);
 	    localStorage.setItem('hext_categories', JSON.stringify(state.categories));
 	    localStorage.setItem('hext_disabled_categories', JSON.stringify(state.disabledCategories));
-            updateMetrics();
         }
 
 	document.addEventListener('DOMContentLoaded', () => {
@@ -486,10 +492,38 @@
 	    if (viewName === 'dashboard') renderCharts();
 	}
 
+	function toggleModal(id, show) {
+	    const overlay = document.getElementById(`${id}-overlay`);
+	    const modal = document.getElementById(`${id}-modal`);
+	    const content = document.getElementById(`${id}-modal-content`);
+
+	    if (show) {
+	        if (overlay) overlay.classList.remove('hidden');
+	        if (modal) modal.classList.remove('hidden');
+	        setTimeout(() => {
+	            if (overlay) overlay.classList.remove('opacity-0');
+	            if (content) {
+	                content.classList.remove('scale-95', 'opacity-0');
+	                content.classList.add('scale-100', 'opacity-100');
+	            }
+	        }, 10);
+	    } else {
+	        if (overlay) overlay.classList.add('opacity-0');
+	        if (content) {
+	            content.classList.remove('scale-100', 'opacity-100');
+	            content.classList.add('scale-95', 'opacity-0');
+	        }
+	        setTimeout(() => {
+	            if (overlay) overlay.classList.add('hidden');
+	            if (modal) modal.classList.add('hidden');
+	        }, 300);
+	    }
+	}
+
 	function openExpenseModal(mode = 'Add') {
 	    if (mode === 'Add' && (!state.budget || state.budget <= 0)) {
 	        showToast("Set Budget first", "error");
-	        openBudgetModal();
+	        toggleModal('budget', true);
 	        return;                                
 	    }
             const overlay = document.getElementById('expense-overlay');
@@ -506,126 +540,30 @@
             submitBtn.innerText = mode === 'Add' ? 'Add Expense' : 'Update Expense';
         }
 
-        function closeExpenseModal() {
-            const overlay = document.getElementById('expense-overlay');
-            const modal = document.getElementById('expense-modal');
-	    const modalContent = document.getElementById('expense-modal-content');
-            overlay.classList.add('opacity-0');
-	    modalContent.classList.remove('scale-100', 'opacity-100');
-	    modalContent.classList.add('scale-95', 'opacity-0');
-            setTimeout(() => {
-	        overlay.classList.add('hidden');
-	        modal.classList.add('hidden');
-	        resetExpenseForm();
-	    }, 300);
-        }
-
-	function openBudgetModal() {
-	    document.getElementById('single-budget-input').value = state.budget || '';
-	    const overlay = document.getElementById('budget-overlay');
-	    const modal = document.getElementById('budget-modal');
-	    const modalContent = document.getElementById('budget-modal-content');
-	    overlay.classList.remove('hidden');
-	    modal.classList.remove('hidden');
-	    setTimeout(() => {
-	        overlay.classList.remove('opacity-0');
-	        modalContent.classList.remove('scale-95', 'opacity-0');
-	        modalContent.classList.add('scale-100', 'opacity-100');
-	    }, 10);
-	}
-
-	function closeBudgetModal() {
-	    const overlay = document.getElementById('budget-overlay');
-	    const modal = document.getElementById('budget-modal');
-	    const modalContent = document.getElementById('budget-modal-content');
-            overlay.classList.add('opacity-0');
-	    modalContent.classList.remove('scale-100', 'opacity-100');
-	    modalContent.classList.add('scale-95', 'opacity-0');
-	    setTimeout(() => {
-	        overlay.classList.add('hidden');
-	        modal.classList.add('hidden');
-	    }, 300);
-	}
-
         function handleSingleBudgetSubmit(e) {
             e.preventDefault();
             state.budget = Number(document.getElementById('single-budget-input').value) || 0;
             saveData();
-            closeBudgetModal();
+            toggleModal('budget', false);
             switchView('dashboard');
 	    showToast("Budget Set");
         }
 
 	function toggleDateInputs() {
 	    const val = document.getElementById('filter-date').value;
-	    const exactInput = document.getElementById('filter-exact-date');
-	    const rangeInputs = document.getElementById('filter-range-inputs');
-    
-	    if (val === 'custom_date') {
-	        exactInput.classList.remove('hidden');
-	        rangeInputs.classList.add('hidden');
-	        rangeInputs.classList.remove('flex');
-	    } else if (val === 'custom_range') {
-	        exactInput.classList.add('hidden');
-	        rangeInputs.classList.remove('hidden');
-	        rangeInputs.classList.add('flex');
-	    } else {
-        	exactInput.classList.add('hidden');
-	        rangeInputs.classList.add('hidden');
-	        rangeInputs.classList.remove('flex');
-	    }
+	    const rangeInputs = document.getElementById('filter-range-inputs');    
+	    document.getElementById('filter-exact-date').classList.toggle('hidden', val !== 'custom_date');
+	    rangeInputs.classList.toggle('hidden', val !== 'custom_range');
+	    rangeInputs.classList.toggle('flex', val === 'custom_range');
 	}
 
 	function toggleAmountInputs() {
 	    const val = document.getElementById('filter-amount').value;
-	    const underInput = document.getElementById('filter-amt-under');
-	    const betweenInputs = document.getElementById('filter-amt-between');
-	    const aboveInput = document.getElementById('filter-amt-above');
-    
-	    underInput.classList.add('hidden');
-	    betweenInputs.classList.add('hidden');
-	    betweenInputs.classList.remove('flex');
-	    aboveInput.classList.add('hidden');
-    
-	    if (val === 'under') {
-	        underInput.classList.remove('hidden');
-	    } else if (val === 'between') {
-	        betweenInputs.classList.remove('hidden');
-	        betweenInputs.classList.add('flex');
-	    } else if (val === 'above') {
-	        aboveInput.classList.remove('hidden');
-	    }
-	}
-
-	function openCategoryModal() {
-	    renderCategoryList();
-        const overlay = document.getElementById('category-overlay');
-        const modal = document.getElementById('category-modal');
-        const modalContent = document.getElementById('category-modal-content');
-
-        overlay.classList.remove('hidden');
-        modal.classList.remove('hidden');
-
-        setTimeout(() => {
-            overlay.classList.remove('opacity-0');
-            modalContent.classList.remove('scale-95', 'opacity-0');
-            modalContent.classList.add('scale-100', 'opacity-100');
-        }, 10);
-	}
-
-	function closeCategoryModal() {
-        const overlay = document.getElementById('category-overlay');
-        const modal = document.getElementById('category-modal');
-        const modalContent = document.getElementById('category-modal-content');
-
-        overlay.classList.add('opacity-0');
-        modalContent.classList.remove('scale-100', 'opacity-100');
-        modalContent.classList.add('scale-95', 'opacity-0');
-
-        setTimeout(() => {
-            overlay.classList.add('hidden');
-            modal.classList.add('hidden');
-        }, 300);
+	    const betweenInputs = document.getElementById('filter-amt-between');    
+	    document.getElementById('filter-amt-under').classList.toggle('hidden', val !== 'under');
+	    document.getElementById('filter-amt-above').classList.toggle('hidden', val !== 'above');
+	    betweenInputs.classList.toggle('hidden', val !== 'between');
+	    betweenInputs.classList.toggle('flex', val === 'between');
 	}
 	
 	function toggleCategoryActive(index, isChecked) {
@@ -862,27 +800,13 @@
 	    const sortBy = document.getElementById('sort-by')?.value || 'date_desc';
 
 	    let filtered = state.expenses.filter(exp => {
-	        let pass = true;
-        	const expDate = new Date(exp.date);
-	        expDate.setHours(0,0,0,0);
-
+	        let pass = true;        
 	        if (dateFilter !== 'all') {
 	            if (dateFilter === 'custom_date' && exactDate) {
-	                const targetDate = new Date(exactDate);
-	                targetDate.setHours(0,0,0,0);
-	                if (expDate.getTime() !== targetDate.getTime()) pass = false;
-	            } 
-	            else if (dateFilter === 'custom_range') {
-	                if (startDate) {
-	                    const sDate = new Date(startDate);
-	                    sDate.setHours(0,0,0,0);
-	                    if (expDate < sDate) pass = false;
-	                }
-	                if (endDate) {
-	                    const eDate = new Date(endDate);
-	                    eDate.setHours(23,59,59,999);
-	                    if (expDate > eDate) pass = false;
-	                }
+	                if (exp.date !== exactDate) pass = false;
+	            } else if (dateFilter === 'custom_range') {
+	                if (startDate && exp.date < startDate) pass = false;
+	                if (endDate && exp.date > endDate) pass = false;
 	            }
 	        }
 
@@ -1236,7 +1160,8 @@
             }
 
             saveData();
-            closeExpenseModal();
+	    updateMetrics();
+            toggleModal('expense', false); resetExpenseForm();
             switchView('dashboard');
 	    showToast(!id ? "Expense added" : "Expense updated");
         }
@@ -1442,16 +1367,15 @@
 	        if (document.getElementById('view-dashboard').classList.contains('active')) {
 	            renderCharts();
 	        }
-	        showToast("App has been reset", "success");
+	        showToast("App has been Reset", "success");
 	    }
 	}
 
 	function showToast(message, type = 'success') {
 	    const container = document.getElementById('toast-container');
 	    const toast = document.createElement('div');
-	    const color = type === 'success' ? 'liquid-glass' : 'bg-red-600';
-	    const textcolor =  type === 'success' ? 'grey' : 'white';   
-	    toast.className = `${color} text-${textcolor} px-4 py-2 rounded-full shadow-lg text-sm font-medium transform transition-all duration-300 translate-y-[-100%] opacity-0`;
+	    const color = type === 'success' ? 'bg-gray-600' : 'bg-red-500';  
+	    toast.className = `${color} text-white px-4 py-2 rounded-full shadow-lg text-sm font-medium transform transition-all duration-300 translate-y-[-100%] opacity-0`;
 	    toast.innerText = message;    
 	    container.appendChild(toast);
 	    requestAnimationFrame(() => {
