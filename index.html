@@ -96,16 +96,16 @@
     <main class="max-w-4xl mx-auto px-4 py-2 relative overflow-x-hidden min-h-[80vh]">
         <div id="summary-cards" class="grid grid-cols-3 gap-3 mb-3">
             <div class="liquid-glass py-4 rounded-xl">
-                <p class="text-xs text-gray-500 uppercase font-semibold" style="text-align:center">Spent</p>
-                <p class="text-lg md:text-xl font-bold text-indigo-600" id="stat-spent" style="text-align:center">₹0</p>
+                <p class="text-xs text-gray-500 uppercase font-semibold text-center">Spent</p>
+                <p class="text-lg md:text-xl font-bold text-indigo-600 text-center" id="stat-spent">₹0</p>
             </div>
 	    <div class="liquid-glass py-4 rounded-xl">
-                <p class="text-xs text-gray-500 uppercase font-semibold" style="text-align:center">Avg Spent</p>
-                <p class="text-lg md:text-xl font-bold text-gray-900" id="stat-average" style="text-align:center">₹0</p>
+                <p class="text-xs text-gray-500 uppercase font-semibold text-center">Avg Spent</p>
+                <p class="text-lg md:text-xl font-bold text-gray-900 text-center" id="stat-average">₹0</p>
             </div>            
             <div class="liquid-glass py-4 rounded-xl">
-                <p class="text-xs text-gray-500 uppercase font-semibold" style="text-align:center">Balance</p>
-                <p class="text-lg md:text-xl font-bold text-green-600" id="stat-remaining" style="text-align:center">₹0</p>
+                <p class="text-xs text-gray-500 uppercase font-semibold text-center">Balance</p>
+                <p class="text-lg md:text-xl font-bold text-green-600 text-center" id="stat-remaining">₹0</p>
             </div>
         </div>
         <div id="settings-heading" class="hidden m-3 mt-0 flex justify-between items-center">
@@ -129,7 +129,7 @@
 	    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div class="liquid-glass p-4 rounded-xl flex flex-col items-center">
                     <h3 class="text-lg font-bold text-gray-800 mb-4 self-start">Category Spending %</h3>
-                    <div id="doughnut-container" class="relative w-full max-w-[280px] mx-auto h-[400px]">
+                    <div id="doughnut-container" class="relative w-full max-w-[280px] mx-auto h-[40vh] min-h-[250px] max-h-[400px]">
                         <canvas id="categoryDoughnutChart"></canvas>
                     </div>
                 </div>
@@ -267,7 +267,7 @@
         </section>
     </main>
 
-    <div id="expense-overlay" class="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 hidden transition-all duration-300 opacity-0" onclick="toggleModal('expense', false); resetExpenseForm();"></div>
+    <div id="global-overlay" class="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 hidden transition-all duration-300 opacity-0" onclick="closeActiveModal()"></div>
 
     <div id="expense-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center px-4 pointer-events-none">
 	<div id="expense-modal-content" class="liquid-glass rounded-2xl shadow-2xl w-full max-w-md p-6 transform scale-95 opacity-0 transition-all duration-300 ease-out pointer-events-auto max-h-[90vh] overflow-y-auto">
@@ -378,8 +378,10 @@
     <div id="toast-container" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-[100] flex flex-col gap-2 pointer-events-none"></div>
 
     <script>
+	let lastUsedCategory = null;
+	let lastUsedDate = null;
 	let chartInstances = { doughnut: null, trend: null, catTrend: null };
-
+	const formatINR = (amount) => `₹${Number(amount).toLocaleString('en-IN')}`;
 	const chartHexColors = [
 	    '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
             '#ec4899', '#06b6d4', '#14b8a6', '#64748b', '#a855f7'
@@ -493,11 +495,12 @@
 	}
 
 	function toggleModal(id, show) {
-	    const overlay = document.getElementById(`${id}-overlay`);
+	    const overlay = document.getElementById(`global-overlay`);
 	    const modal = document.getElementById(`${id}-modal`);
 	    const content = document.getElementById(`${id}-modal-content`);
 
 	    if (show) {
+		activeModalId = id;
 	        if (overlay) overlay.classList.remove('hidden');
 	        if (modal) modal.classList.remove('hidden');
 	        setTimeout(() => {
@@ -516,7 +519,17 @@
 	        setTimeout(() => {
 	            if (overlay) overlay.classList.add('hidden');
 	            if (modal) modal.classList.add('hidden');
+		    if (activeModalId === id) activeModalId = null;
 	        }, 300);
+	    }
+	}
+
+	let activeModalId = null;
+
+	function closeActiveModal() {
+	    if (activeModalId) {
+	        toggleModal(activeModalId, false);
+	        if (activeModalId === 'expense') resetExpenseForm();
 	    }
 	}
 
@@ -526,10 +539,11 @@
 	        toggleModal('budget', true);
 	        return;                                
 	    }
-            const overlay = document.getElementById('expense-overlay');
+            const overlay = document.getElementById('global-overlay');
             const modal = document.getElementById('expense-modal');
             const modalContent = document.getElementById('expense-modal-content');
             const submitBtn = document.getElementById('modal-submit-btn');
+	    activeModalId = 'expense';
             overlay.classList.remove('hidden');
 	    modal.classList.remove('hidden');
             setTimeout(() => {
@@ -600,8 +614,8 @@
 	                <span class="text-sm font-medium ${isDisabled ? 'text-gray-400 line-through' : 'text-gray-800'}">${escapeHTML(cat)}</span>
 	            </div>
 	            <div class="flex gap-1">
-	                <button onclick="editCategory(${index})" type="button" class="text-xs bg-gray-100 hover:bg-indigo-100 hover:text-indigo-600 p-1.5 px-2 rounded text-gray-600 transition"><i class="fa-solid fa-pencil"></i></button>
-	                <button onclick="deleteCategory(${index})" type="button" class="text-xs bg-gray-100 hover:bg-red-100 p-1.5 px-2 rounded text-gray-600 transition"><i class="fa-solid fa-trash-can"></i></button>
+	                <button onclick="editCategory(${index})" type="button" aria-label="Edit Category" class="text-xs bg-gray-100 hover:bg-indigo-100 hover:text-indigo-600 p-1.5 px-2 rounded text-gray-600 transition"><i class="fa-solid fa-pencil"></i></button>
+	                <button onclick="deleteCategory(${index})" type="button" aria-label="Delete Category" class="text-xs bg-gray-100 hover:bg-red-100 p-1.5 px-2 rounded text-gray-600 transition"><i class="fa-solid fa-trash-can"></i></button>
 	            </div>
 	        </div>
 	    `}).join('');
@@ -648,12 +662,16 @@
 	    if (newName && newName.trim() !== "" && !state.categories.includes(newName.trim())) {
 	        const finalName = newName.trim();
 	    	state.categories[index] = finalName;
+		state.expenses.forEach(exp => {
+	            if (exp.category === oldName) exp.category = finalName;
+	        });
 	        const dIndex = state.disabledCategories.indexOf(oldName);
 	        if (dIndex !== -1) {
 	             state.disabledCategories[dIndex] = finalName;
 	        }
 	        saveData();
 	        renderCategoryList();
+		updateMetrics();
 		showToast("Category updated");
 	    }
 	}
@@ -668,22 +686,29 @@
                 titleEl.innerHTML = `
 		    <span class="text-4xl font-extrabold text-700">${spentPercentage}%</span>
 		    <span class="text-sm font-medium text-gray-500 mx-1">of</span> 
-		    <span class="text-xl font-bold text-gray-600">₹${totalBudget.toLocaleString('en-IN')}</span> 
+		    <span class="text-xl font-bold text-gray-600">${formatINR(totalBudget)}</span> 
 		    <span class="text-sm font-medium text-gray-500 ml-1">spent</span>`;
             }
 
-	    const uniqueDates = new Set(state.expenses.map(exp => exp.date)).size;
-	    const averagePerDay = uniqueDates > 0 ? Math.round(totalSpent / uniqueDates) : 0;
+	    let averagePerDay = 0;
+	    if (state.expenses.length > 0) {
+		const dates = state.expenses.map(exp => new Date(exp.date).getTime());
+		const earliestDate = Math.min(...dates);
+		const lastDate = Math.max(...dates); 
+		const diffTime = Math.abs(lastDate - earliestDate);
+		const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+		averagePerDay = Math.round(totalSpent / diffDays);
+	    }
 
-	    document.getElementById('stat-average').innerText = `₹${averagePerDay.toLocaleString('en-IN')}`;	    
-            document.getElementById('stat-spent').innerText = `₹${totalSpent.toLocaleString('en-IN')}`;
+	    document.getElementById('stat-average').innerText = `${formatINR(averagePerDay)}`;	    
+            document.getElementById('stat-spent').innerText = `${formatINR(totalSpent)}`;
             
             const remEl = document.getElementById('stat-remaining');
-            remEl.innerText = `₹${remaining.toLocaleString('en-IN')}`;
+            remEl.innerText = `${formatINR(remaining)}`;
             if(remaining < 0) {
-                remEl.className = "text-lg md:text-xl font-bold text-red-600";
+                remEl.className = "text-lg md:text-xl font-bold text-red-600 text-center";
             } else {
-                remEl.className = "text-lg md:text-xl font-bold text-green-600";
+                remEl.className = "text-lg md:text-xl font-bold text-green-600 text-center";
             }
 
             renderExpenseList();
@@ -852,10 +877,10 @@
 	                </div>
 	            </div>
                     <div class="flex items-center gap-4">
-                        <span class="text-sm font-bold text-gray-900">₹${Number(exp.amount).toLocaleString('en-IN')}</span>
+                        <span class="text-sm font-bold text-gray-900">${formatINR(Number(exp.amount))}</span>
                         <div class="flex gap-1">
-                            ${!isEditingMode ? `<button onclick="editExpense('${exp.id}')" class="text-xs bg-gray-100 hover:bg-indigo-100 hover:text-indigo-600 p-1.5 px-2 rounded text-gray-600 transition"><i class="fa-solid fa-pencil"></i></button>
-                            <button onclick="deleteExpense('${exp.id}')" class="text-xs bg-gray-100 hover:bg-red-100 p-1.5 px-2 rounded text-gray-600 transition"><i class="fa-solid fa-trash-can"></i></button>` : ''}
+                            ${!isEditingMode ? `<button onclick="editExpense('${exp.id}')" aria-label="Edit Expense" class="text-xs bg-gray-100 hover:bg-indigo-100 hover:text-indigo-600 p-1.5 px-2 rounded text-gray-600 transition"><i class="fa-solid fa-pencil"></i></button>
+                            <button onclick="deleteExpense('${exp.id}')" aria-label="Delete Expense" class="text-xs bg-gray-100 hover:bg-red-100 p-1.5 px-2 rounded text-gray-600 transition"><i class="fa-solid fa-trash-can"></i></button>` : ''}
                         </div>
                     </div>
                 </div>
@@ -942,7 +967,7 @@
             }
 	    
 	    if (doughnutContainer && !document.getElementById('categoryDoughnutChart')) {
-	        doughnutContainer.className = "relative w-full max-w-[280px] mx-auto h-[400px]";
+	        doughnutContainer.className = "relative w-full max-w-[280px] mx-auto h-[40vh] min-h-[250px] max-h-[400px]";
 	        doughnutContainer.innerHTML = '<canvas id="categoryDoughnutChart"></canvas>';
 	    }
 	    if (trendContainer && !document.getElementById('spendingTrendChart')) {
@@ -974,7 +999,7 @@
 	                <span class="text-gray-700 font-semibold text-sm">${cat}</span>
 	            </div>
 	            <div class="flex items-center gap-4 text-sm">
-	                <span class="text-gray-900 font-bold">₹${amount.toLocaleString('en-IN')}</span>
+	                <span class="text-gray-900 font-bold">${formatINR(amount)}</span>
 	                <span class="text-gray-500 w-12 text-right font-medium">${percentOfBudget}%</span>
 	            </div>
 	        </div>
@@ -1149,6 +1174,9 @@
             const date = document.getElementById('exp-date').value;
             const description = document.getElementById('exp-notes').value;
 
+	    lastUsedCategory = category;
+	    lastUsedDate = date;
+
             if(!id) {
                 const newExpense = { id: 'exp_' + Date.now(), amount, category, date, description };
                 state.expenses.push(newExpense);
@@ -1191,7 +1219,14 @@
             document.getElementById('form-title').innerText = "Add New Expense";
             document.getElementById('expense-id').value = "";
             document.getElementById('expense-form').reset();
-            setDefaultDate();
+            if (lastUsedDate) {
+	        document.getElementById('exp-date').value = lastUsedDate;
+	    } else {
+	        setDefaultDate();
+	    }    
+	    if (lastUsedCategory) {
+	        document.getElementById('exp-category').value = lastUsedCategory;
+	    }
         }
 
         function setDefaultDate() {
@@ -1230,17 +1265,25 @@
 	    const totalBudget = state.budget || 0;
 	    const totalSpent = state.expenses.reduce((sum, e) => sum + Number(e.amount), 0);
 	    const remaining = totalBudget - totalSpent;
-	    const uniqueDatesCount = new Set(state.expenses.map(exp => exp.date)).size;
-	    const averagePerDay = uniqueDatesCount > 0 ? Math.round(totalSpent / uniqueDatesCount) : 0;
 	    const spentPercentage = totalBudget > 0 ? Math.round((totalSpent / totalBudget) * 100) : 0;    
 	    const sorted = [...state.expenses].sort((a,b) => new Date(a.date) - new Date(b.date));
     
+	    let averagePerDay = 0;
+	    if (state.expenses.length > 0) {
+		const dates = state.expenses.map(exp => new Date(exp.date).getTime());
+		const earliestDate = Math.min(...dates);
+		const lastDate = Math.max(...dates); 
+		const diffTime = Math.abs(lastDate - earliestDate);
+		const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+		averagePerDay = Math.round(totalSpent / diffDays);
+	    }
+
 	    let tableRows = sorted.map(exp => `
 	        <tr class="border-b border-gray-100 text-gray-700">
 	            <td class="p-2">${formatDate(exp.date)}</td>
 	            <td class="p-2">${escapeHTML(exp.category)}</td>
 	            <td class="p-2">${escapeHTML(exp.description || '-')}</td>
-	            <td class="p-2 text-right font-medium">₹${Number(exp.amount).toLocaleString('en-IN')}</td>
+	            <td class="p-2 text-right font-medium">${formatINR(Number(exp.amount))}</td>
 	        </tr>
 	    `).join('');
 
@@ -1259,15 +1302,15 @@
 	        <div class="grid grid-cols-3 gap-2 mb-2">
 	            <div class="bg-gray-50 py-4 rounded-xl border border-gray-200">
 	                <p class="text-xs text-gray-500 uppercase font-semibold text-center">Spent</p>
-	                <p class="text-lg font-bold text-indigo-600 text-center">₹${totalSpent.toLocaleString('en-IN')}</p>
+	                <p class="text-lg font-bold text-indigo-600 text-center">${formatINR(totalSpent)}</p>
 	            </div>
 	            <div class="bg-gray-50 py-4 rounded-xl border border-gray-200">
 	                <p class="text-xs text-gray-500 uppercase font-semibold text-center">Avg Spent</p>
-	                <p class="text-lg font-bold text-gray-900 text-center">₹${averagePerDay.toLocaleString('en-IN')}</p>
+	                <p class="text-lg font-bold text-gray-900 text-center">${formatINR(averagePerDay)}</p>
 	            </div>
 	            <div class="bg-gray-50 py-4 rounded-xl border border-gray-200">
 	                <p class="text-xs text-gray-500 uppercase font-semibold text-center">Balance</p>
-        	        <p class="text-lg font-bold ${remaining < 0 ? 'text-red-600' : 'text-green-600'} text-center">₹${remaining.toLocaleString('en-IN')}</p>
+        	        <p class="text-lg font-bold ${remaining < 0 ? 'text-red-600' : 'text-green-600'} text-center">${formatINR(remaining)}</p>
 	            </div>
 	        </div>
 
@@ -1275,7 +1318,7 @@
 	            <h3 class="mb-4 text-gray-700 flex items-baseline">
 	                <span class="text-3xl font-extrabold text-gray-800">${spentPercentage}%</span>
 	                <span class="text-sm font-medium text-gray-500 mx-1">of</span> 
-	                <span class="text-xl font-bold text-gray-600">₹${totalBudget.toLocaleString('en-IN')}</span> 
+	                <span class="text-xl font-bold text-gray-600">${formatINR(totalBudget)}</span> 
 	                <span class="text-sm font-medium text-gray-500 ml-1">spent</span>
 	            </h3>
 	            <div class="w-full bg-gray-200 rounded-full h-4 flex overflow-hidden mb-4">
