@@ -150,8 +150,8 @@
             </div>
         </section>
 
-        <section id="view-expenses" class="view-section space-y-6">
-	    <div class="bg-white p-3 pr-0 rounded-xl flex overflow-x-auto hide-scrollbar gap-2 items-center text-sm relative">
+        <section id="view-expenses" class="view-section space-y-3">
+	    <div class="bg-white p-1 pl-2 pr-0 rounded-xl flex overflow-x-auto hide-scrollbar gap-2 items-center text-sm relative">
 		  <div class="flex items-center gap-0.5 shrink-0 min-w-[110px] border-r pr-2 border-gray-200">
                     <i class="fa-solid fa-sort text-gray-400"></i>
                     <select id="sort-by" onchange="renderExpenseList()" class="w-full border-none outline-none bg-transparent text-gray-700 cursor-pointer">
@@ -202,7 +202,7 @@
             </div>
 
             <div class="liquid-glass rounded-xl overflow-hidden">
-                <div class="p-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
+                <div class="px-4 py-1.5 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
 		    <div class="flex items-center gap-2">
 		        <input type="checkbox" id="select-all-cb" class="hidden cursor-pointer w-4 h-4 text-indigo-600 rounded" onclick="toggleSelectAll(this)">
 		        <h3 id="edit-toggle-btn" class="text-md font-bold text-gray-700 cursor-pointer hover:text-indigo-600 transition" onclick="toggleEditMode()">Edit</h3>
@@ -217,7 +217,7 @@
 		    </div>
 		<span class="text-xs text-gray-500 font-medium" id="tx-count">0 items</span>
 	   </div>
-                <div id="expense-list" class="divide-y divide-gray-100 max-h-[600px] overflow-y-auto">
+                <div id="expense-list" class="divide-y divide-gray-100">
                     </div>
             </div>
         </section>
@@ -868,7 +868,7 @@
 	    }
 
             container.innerHTML = filtered.map(exp => `
-                <div class="p-4 flex justify-between items-center border-b border-white/40 liquid-glass-row transition border-b border-gray-50">
+                <div class="px-4 py-2 flex justify-between items-center border-b border-white/40 liquid-glass-row transition border-b border-gray-50">
                     <div class="flex-1 min-w-0 pr-2 flex items-center">
 	                ${isEditingMode ? `<input type="checkbox" class="row-checkbox mr-3 cursor-pointer w-4 h-4 text-indigo-600 rounded" value="${exp.id}" onclick="updateSelectionCounter()">` : ''}
 	                <div>
