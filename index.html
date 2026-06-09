@@ -27,8 +27,8 @@
 	input, textarea, select {-webkit-user-select: auto; -moz-user-select: auto; -ms-user-select: auto; user-select: auto; }
 	.liquid-glass {
             background: rgba(255, 255, 255, 0.45) !important;
-            backdrop-filter: blur(6px) saturate(180%);
-            -webkit-backdrop-filter: blur(6px) saturate(180%);
+            backdrop-filter: blur(12px) saturate(180%);
+            -webkit-backdrop-filter: blur(12px) saturate(180%);
             border: 1px solid rgba(255, 255, 255, 0.8) !important;
             box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07) !important;
         }
@@ -47,12 +47,15 @@
     </style>
 </head>
 <body class="bg-gradient-to-br from-indigo-100 via-fuchsia-50 to-teal-100 bg-fixed bg-cover bg-no-repeat text-gray-800 font-sans pb-20 min-h-screen">
-    <header class="liquid-glass text-black shadow-sm sticky top-0 z-30">
-        <div class="max-w-4xl mx-auto px-5 py-2 flex justify-between items-center">
-            <h1 class="text-xl font-bold tracking-wide flex items-center gap-2"> <i class="fa-solid fa-house-chimney"></i> EXPENSE TRACKER</h1>
-            <button id="plus-btn" onclick="openExpenseModal('Add')" class="p-1 rounded-full hover:bg-white-800 transition focus:outline-none"><i class="fa-solid fa-plus text-2xl"></i></button>
-        </div>
-    </header>
+    <header class="liquid-glass text-gray-800 shadow-[0_8px_30px_rgb(0,0,0,0.12)] sticky z-40 top-3 mx-auto w-[95%] max-w-4xl rounded-full px-4 py-1 m-3 flex justify-between items-center transition-all duration-300">
+	    <h1 class="text-xl font-bold tracking-wide flex items-center gap-1.5">
+	        <i class="fa-solid fa-house-chimney text-xl"></i> 
+	        <span>EXPENSE TRACKER</span>
+	    </h1>
+	    <button id="plus-btn" onclick="openExpenseModal('Add')" class="w-10 h-10 rounded-full hover:bg-white/60 bg-white/30 border border-white/50 shadow-sm transition-all focus:outline-none flex items-center justify-center transform hover:scale-105">
+	        <i class="fa-solid fa-plus text-xl text-indigo-700"></i>
+	    </button>
+	</header>
     <main class="max-w-4xl mx-auto px-4 py-2">
         <div id="summary-cards" class="grid grid-cols-3 gap-3 mb-6">
             <div class="liquid-glass py-4 rounded-xl">
@@ -227,7 +230,7 @@
         </section>
     </main>
 
-    <div id="expense-overlay" class="fixed inset-0 bg-black/5 backdrop-blur-sm z-40 hidden transition-all duration-300 opacity-0" onclick="closeExpenseModal()"></div>
+    <div id="expense-overlay" class="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 hidden transition-all duration-300 opacity-0" onclick="closeExpenseModal()"></div>
 
     <div id="expense-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center px-4 pointer-events-none">
 	<div id="expense-modal-content" class="liquid-glass rounded-2xl shadow-2xl w-full max-w-md p-6 transform scale-95 opacity-0 transition-all duration-300 ease-out pointer-events-auto max-h-[90vh] overflow-y-auto">
@@ -275,29 +278,36 @@
 	    </div>
 	</div>
 
-    <div id="budget-modal" class="fixed inset-0 backdrop-blur-sm z-50 hidden flex items-center justify-center px-4">
-        <div class="absolute inset-0 bg-black/5" onclick="closeBudgetModal()"></div>        
-        <div class="liquid-glass rounded-xl shadow-lg z-10 w-full max-w-sm p-6 relative transform transition-all">
+    <div id="budget-overlay" class="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 hidden transition-opacity duration-300 opacity-0" onclick="closeBudgetModal()"></div>
+
+    <div id="budget-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center px-4 pointer-events-none">
+        <div id="budget-modal-content" class="liquid-glass rounded-xl shadow-lg w-full max-w-sm p-6 relative transform scale-95 opacity-0 transition-all duration-300 ease-out pointer-events-auto">
             <form onsubmit="handleSingleBudgetSubmit(event)">
-                <label class="block text-sm font-medium text-gray-600 mb-1">Total Budget (₹)</label>
+                <label class="block text-sm font-medium text-gray-800 mb-1">Total Budget (₹)</label>
                 <input type="number" id="single-budget-input" required min="0" class="w-full border p-2 rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none mb-4 text-lg font-bold">
                 <button type="submit" class="w-full bg-emerald-600 text-white py-3 rounded-lg font-bold hover:bg-emerald-700 transition shadow">Set Budget</button>
             </form>
         </div>
     </div>
 
-    <div id="category-modal" class="fixed inset-0 backdrop-blur-sm z-50 hidden flex items-center justify-center px-4">
-	<div class="absolute inset-0 bg-black/5" onclick="closeCategoryModal()"></div>
-    	<div class="liquid-glass rounded-xl shadow-lg z-10 w-full max-w-md p-6 relative max-h-[80vh] flex flex-col">
-	    <h3 class="text-xl font-bold mb-4 text-gray-800 text-center">Categories</h3>
-	    <div id="category-list" class="overflow-y-auto flex-1 divide-y divide-gray-100 mb-4 max-h-64">
-        	</div>
-	    <form onsubmit="addCategory(event)" class="flex gap-2 border-t border-gray-100 pt-4">
-        	<input type="text" id="new-category-input" required placeholder="Add new category..." class="flex-1 border p-2 rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none">
-            	<button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition font-bold"><i class="fa-solid fa-plus"></i></button>
-	     </form>
-	 </div>
-     </div>
+    <div id="category-overlay" class="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 hidden transition-opacity duration-300 opacity-0" onclick="closeCategoryModal()"></div>
+
+    <div id="category-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center px-4 pointer-events-none">
+        <div id="category-modal-content" class="liquid-glass rounded-xl shadow-lg w-full max-w-md p-6 relative max-h-[80vh] flex flex-col transform scale-95 opacity-0 transition-all duration-300 ease-out pointer-events-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-800 flex-1 text-center pl-6">Categories</h3>
+                <button onclick="closeCategoryModal()" class="text-gray-500 hover:text-gray-800 transition focus:outline-none">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+            <div id="category-list" class="overflow-y-auto flex-1 divide-y divide-white/40 mb-4 max-h-64">
+            </div>
+            <form onsubmit="addCategory(event)" class="flex gap-2 border-t border-white/40 pt-4">
+                <input type="text" id="new-category-input" required placeholder="Add new category..." class="flex-1 border p-2 rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none">
+                <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition font-bold"><i class="fa-solid fa-plus"></i></button>
+            </form>
+        </div>
+    </div>
 
      <div id="report-modal" class="fixed inset-0 z-50 hidden bg-gray-100 flex flex-col">
 	 <div class="liquid-glass text-black shadow-md px-5 py-3 flex justify-between items-center z-10">
@@ -317,7 +327,7 @@
 	 </div>
      </div>
 
-    <nav id="bottom-nav" class="fixed bottom-3 left-1/2 transform -translate-x-1/2 w-[90%] max-w-sm liquid-glass rounded-full flex justify-around items-center text-xs z-30 py-3 transition-transform duration-300">
+    <nav id="bottom-nav" class="fixed bottom-3 left-1/2 transform -translate-x-1/2 w-[90%] max-w-sm liquid-glass rounded-full flex justify-around items-center text-xs z-30 py-1 transition-transform duration-300">
         <button id="nav-btn-analytics" onclick="switchView('dashboard')" class="flex flex-col items-center text-indigo-600 font-medium w-16 transition-colors">
             <span><i class="fas fa-magnifying-glass-chart text-lg"></i></span>Analytics
         </button>
@@ -331,7 +341,7 @@
 	    <span>Settings</span>
 	</button>       
     </nav>
-    <div id="toast-container" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-[100] flex flex-col gap-2 pointer-events-none"></div>
+    <div id="toast-container" class="liquid-glass fixed top-4 left-1/2 transform -translate-x-1/2 z-[100] flex flex-col gap-2 pointer-events-none"></div>
 
     <script>
 	let chartInstances = { doughnut: null, trend: null, catTrend: null };
@@ -453,13 +463,31 @@
         }
 
 	function openBudgetModal() {
-            document.getElementById('single-budget-input').value = state.budget || '';
-            document.getElementById('budget-modal').classList.remove('hidden');
-        }
+	    document.getElementById('single-budget-input').value = state.budget || '';
+	    const overlay = document.getElementById('budget-overlay');
+	    const modal = document.getElementById('budget-modal');
+	    const modalContent = document.getElementById('budget-modal-content');
+	    overlay.classList.remove('hidden');
+	    modal.classList.remove('hidden');
+	    setTimeout(() => {
+	        overlay.classList.remove('opacity-0');
+	        modalContent.classList.remove('scale-95', 'opacity-0');
+	        modalContent.classList.add('scale-100', 'opacity-100');
+	    }, 10);
+	}
 
-        function closeBudgetModal() {
-            document.getElementById('budget-modal').classList.add('hidden');
-        }
+	function closeBudgetModal() {
+	    const overlay = document.getElementById('budget-overlay');
+	    const modal = document.getElementById('budget-modal');
+	    const modalContent = document.getElementById('budget-modal-content');
+            overlay.classList.add('opacity-0');
+	    modalContent.classList.remove('scale-100', 'opacity-100');
+	    modalContent.classList.add('scale-95', 'opacity-0');
+	    setTimeout(() => {
+	        overlay.classList.add('hidden');
+	        modal.classList.add('hidden');
+	    }, 300);
+	}
 
         function handleSingleBudgetSubmit(e) {
             e.preventDefault();
@@ -513,11 +541,33 @@
 
 	function openCategoryModal() {
 	    renderCategoryList();
-	    document.getElementById('category-modal').classList.remove('hidden');
+        const overlay = document.getElementById('category-overlay');
+        const modal = document.getElementById('category-modal');
+        const modalContent = document.getElementById('category-modal-content');
+
+        overlay.classList.remove('hidden');
+        modal.classList.remove('hidden');
+
+        setTimeout(() => {
+            overlay.classList.remove('opacity-0');
+            modalContent.classList.remove('scale-95', 'opacity-0');
+            modalContent.classList.add('scale-100', 'opacity-100');
+        }, 10);
 	}
 
 	function closeCategoryModal() {
-	    document.getElementById('category-modal').classList.add('hidden');
+        const overlay = document.getElementById('category-overlay');
+        const modal = document.getElementById('category-modal');
+        const modalContent = document.getElementById('category-modal-content');
+
+        overlay.classList.add('opacity-0');
+        modalContent.classList.remove('scale-100', 'opacity-100');
+        modalContent.classList.add('scale-95', 'opacity-0');
+
+        setTimeout(() => {
+            overlay.classList.add('hidden');
+            modal.classList.add('hidden');
+        }, 300);
 	}
 	
 	function toggleCategoryActive(index, isChecked) {
