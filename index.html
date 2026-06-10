@@ -220,7 +220,7 @@
         <section id="view-settings" class="view-section space-y-3">
 	    <div id="settings-heading" class="m-1 mt-0 flex justify-between items-center">
 	        <h2 class="text-2xl font-bold text-gray-800">Settings</h2>
-	        <button onclick="resetAppData()" class="bg-red-500 hover:bg-red-600 text-white text-sm font-bold py-1.5 px-4 rounded-full shadow transition-colors focus:outline-none focus:ring-2 focus:ring-red-400"><i class="fas fa-rotate"></i>Reset</button>
+	        <button onclick="resetAppData()" class="bg-red-500 hover:bg-red-600 text-white text-sm font-bold py-1.5 px-4 rounded-full shadow transition-colors focus:outline-none focus:ring-2 focus:ring-red-400"><i class="fas fa-rotate"></i> RESET</button>
 	    </div>
             <div class="liquid-glass rounded-xl shadow-sm border border-gray-100 divide-y divide-gray-100 overflow-hidden">
                 <div onclick="editUsername()" class="flex items-center p-4 hover:bg-gray-50 cursor-pointer transition">
@@ -367,11 +367,11 @@
             <span><i class="fas fa-magnifying-glass-chart text-lg"></i></span>Analytics
         </button>
 
-        <button id="nav-btn-expenses" onclick="switchView('expenses')" class="flex flex-col items-center text-gray-500 hover:text-indigo-600 w-16 transition-colors">
+        <button id="nav-btn-expenses" onclick="switchView('expenses')" class="flex flex-col items-center text-gray-500 w-16 transition-colors">
             <span><i class="fas fa-book text-lg"></i></span>Expenses
         </button> 
 
-	<button id="nav-btn-settings" onclick="switchView('settings')" class="flex flex-col items-center text-gray-500 hover:text-indigo-600 w-16 transition-colors">
+	<button id="nav-btn-settings" onclick="switchView('settings')" class="flex flex-col items-center text-gray-500 w-16 transition-colors">
 	    <i class="fa-solid fa-gear text-lg"></i>
 	    <span>Settings</span>
 	</button>       
@@ -454,7 +454,7 @@
 	    const btnSettings = document.getElementById('nav-btn-settings');
 
 	    if (btnAnalytics && btnExpenses && btnSettings) {
-	        const inactiveClass = "flex flex-col items-center text-gray-500 hover:text-indigo-600 w-16 transition-colors";
+	        const inactiveClass = "flex flex-col items-center text-gray-500 w-16 transition-colors";
 	        const activeClass = "flex flex-col items-center text-indigo-600 font-medium w-16 transition-colors";        
 	        btnAnalytics.className = viewName === 'analytics' ? activeClass : inactiveClass;
 	        btnExpenses.className = viewName === 'expenses' ? activeClass : inactiveClass;
@@ -478,6 +478,40 @@
 	    }, 300);
 
 	    if (viewName === 'analytics') renderCharts();
+	}
+
+	let touchStartX = 0;
+	let touchStartY = 0;
+	let touchEndX = 0;
+	let touchEndY = 0;
+
+	const minSwipeDistance = 50; 
+	document.addEventListener('touchstart', e => {
+	    touchStartX = e.changedTouches[0].screenX;
+	    touchStartY = e.changedTouches[0].screenY;
+	}, { passive: true });
+	document.addEventListener('touchend', e => {
+	    touchEndX = e.changedTouches[0].screenX;
+	    touchEndY = e.changedTouches[0].screenY;
+	    handleSwipe();
+	}, { passive: true });
+
+	function handleSwipe() {
+	    const deltaX = touchEndX - touchStartX;
+	    const deltaY = touchEndY - touchStartY;
+	    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
+	        if (activeModalId !== null) return;
+	        const currentIndex = VIEW_ORDER.indexOf(currentActiveView);        
+	        if (deltaX < 0) {
+	            if (currentIndex < VIEW_ORDER.length - 1) {
+	                switchView(VIEW_ORDER[currentIndex + 1]);
+	            }
+	        } else {
+	            if (currentIndex > 0) {
+	                switchView(VIEW_ORDER[currentIndex - 1]);
+	            }
+	        }
+	    }
 	}
 
 	function toggleModal(id, show) {
