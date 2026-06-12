@@ -578,6 +578,7 @@
             e.preventDefault();
             state.budget = Number(document.getElementById('single-budget-input').value) || 0;
             saveData();
+	    updateMetrics();
             toggleModal('budget', false);
 	    showToast("Budget Set");
         }
